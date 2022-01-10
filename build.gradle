@@ -1,7 +1,3 @@
-plugins {
-    id "maven"
-}
-
 group "com.github.sasanquaa"
 version "1.0.0"
 
@@ -25,6 +21,7 @@ allprojects {
 
 subprojects {
     apply plugin: "java"
+    apply plugin: "maven-publish"
 
     jar {
         from project(":Common").sourceSets.getByName("main").output
