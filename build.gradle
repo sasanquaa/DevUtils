@@ -1,5 +1,9 @@
-group "Utilities"
-version = "1.0.0"
+plugins {
+    id "maven"
+}
+
+group "com.github.sasanquaa"
+version "1.0.0"
 
 configurations {
     bundleJar {
@@ -25,7 +29,6 @@ subprojects {
     jar {
         from project(":Common").sourceSets.getByName("main").output
     }
-
 }
 
 dependencies {
@@ -52,7 +55,6 @@ tasks.register("buildAll") { task ->
         delete {
             it.delete subprojects.collect {file("${it.name}/build/")}
         }
-
     }
 
 }

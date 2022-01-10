@@ -1,5 +1,3 @@
-group 'Utilities'
-
 dependencies {
     implementation "org.spongepowered:spongeapi:$spongeVersion"
     implementation project(":Common")
