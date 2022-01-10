@@ -1,0 +1,15 @@
+.gradle/
+.settings/
+.idea/
+build/
+Sponge/build/
+Common/build/
+Forge/build/
+libs/
+bin/
+
+gradle.properties
+.project
+.classpath
+*.iml
+

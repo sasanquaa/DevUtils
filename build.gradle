@@ -1,0 +1,58 @@
+group "Utilities"
+version = "1.0.0"
+
+configurations {
+    bundleJar {
+        transitive = false
+    }
+}
+
+allprojects {
+    ext {
+        spongeVersion = '7.3.0'
+        forgeVersion = '1.12.2-14.23.5.2860'
+    }
+
+    repositories {
+        mavenCentral()
+        maven { url 'https://repo.spongepowered.org/maven' }
+    }
+}
+
+subprojects {
+    apply plugin: "java"
+
+    jar {
+        from project(":Common").sourceSets.getByName("main").output
+    }
+
+}
+
+dependencies {
+    subprojects.each {
+        bundleJar it
+    }
+}
+
+tasks.register("buildAll") { task ->
+
+    task.dependsOn configurations.named("bundleJar")
+
+    task.doFirst {
+        copy {
+            from subprojects.collect {file("./${it.name}/build/libs/${it.name}.jar")}
+            eachFile {
+                it.setName("${it.name.replace(".jar", "")}Utils.jar")
+            }
+            into file("./build/libs/")
+        }
+    }
+
+    task.doLast {
+        delete {
+            it.delete subprojects.collect {file("${it.name}/build/")}
+        }
+
+    }
+
+}

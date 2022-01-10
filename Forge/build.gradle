@@ -1,0 +1,22 @@
+buildscript {
+    repositories {
+        maven { url 'https://files.minecraftforge.net/maven' }
+    }
+    dependencies {
+        classpath 'net.minecraftforge.gradle:ForgeGradle:5.1.+'
+    }
+}
+
+apply plugin: 'net.minecraftforge.gradle'
+
+group 'Utilities'
+
+minecraft {
+    mappings channel: 'stable', version: '39-1.12'
+}
+
+dependencies {
+    minecraft "net.minecraftforge:forge:$forgeVersion"
+
+    implementation project(":Common")
+}

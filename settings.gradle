@@ -1,0 +1,6 @@
+rootProject.name = "Utilities"
+
+include 'Forge'
+include 'Sponge'
+include 'Common'
+
