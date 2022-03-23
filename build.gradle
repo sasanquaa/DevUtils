@@ -6,7 +6,7 @@ configurations {
 
 allprojects {
 
-    group "com.github.sasanquaa.DevUtils"
+    group "me.sasanqua.utils"
     version "1.0.0"
 
     ext {
@@ -59,7 +59,7 @@ tasks.register("buildAll") { task ->
 
     task.doFirst {
         copy {
-            from subprojects.collect {file("./${it.name}/build/libs/${it.name}.jar")}
+            from subprojects.collect { file("./${it.name}/build/libs/${it.name}.jar") }
             eachFile {
                 it.setName("${it.name.replace(".jar", "")}Utils.jar")
             }
@@ -69,7 +69,7 @@ tasks.register("buildAll") { task ->
 
     task.doLast {
         delete {
-            it.delete subprojects.collect {file("${it.name}/build/")}
+            it.delete subprojects.collect { file("${it.name}/build/") }
         }
     }
 
