@@ -14,6 +14,8 @@ import java.util.regex.Pattern;
 
 public final class TextUtils {
 
+	public static final TextTemplateConverter DEFAULT_CONVERTER = converterBuilder().build();
+
 	public static Text deserialize(String str) {
 		return TextSerializers.FORMATTING_CODE.deserialize(str);
 	}
