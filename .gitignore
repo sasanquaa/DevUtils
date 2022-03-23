@@ -8,7 +8,6 @@ Forge/build/
 libs/
 bin/
 
-gradle.properties
 .project
 .classpath
 *.iml
