@@ -14,7 +14,11 @@ import java.util.regex.Pattern;
 
 public final class TextUtils {
 
-	public static final TextTemplateConverter DEFAULT_CONVERTER = converterBuilder().build();
+	public static final TextTemplateConverter PERCENT_CONVERTER = converterBuilder().build();
+	public static final TextTemplateConverter CURLY_BRACKET_CONVERTER = converterBuilder().openArg("{")
+			.closeArg("}")
+			.pattern(Pattern.compile("\\{([^{}\\s]+)}", Pattern.CASE_INSENSITIVE))
+			.build();
 
 	public static Text deserialize(String str) {
 		return TextSerializers.FORMATTING_CODE.deserialize(str);
