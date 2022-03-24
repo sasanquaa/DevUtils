@@ -1,6 +1,7 @@
 package me.sasanqua.utils.sponge;
 
 import com.google.common.base.Preconditions;
+import com.google.common.collect.Lists;
 import me.sasanqua.utils.common.Builder;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextRepresentable;
@@ -8,9 +9,11 @@ import org.spongepowered.api.text.TextTemplate;
 import org.spongepowered.api.text.serializer.TextSerializers;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
+import java.util.stream.Collectors;
 
 public final class TextUtils {
 
@@ -34,6 +37,22 @@ public final class TextUtils {
 
 	public static String serializeLegacy(Text text) {
 		return TextSerializers.LEGACY_FORMATTING_CODE.serialize(text);
+	}
+
+	public static List<Text> lore(String... msgs) {
+		return lore(Arrays.asList(msgs));
+	}
+
+	public static List<Text> lore(List<String> msgs) {
+		return msgs.stream().map(TextUtils::deserialize).collect(Collectors.toList());
+	}
+
+	public static List<Text> loreLegacy(String... msgs) {
+		return loreLegacy(Arrays.asList(msgs));
+	}
+
+	public static List<Text> loreLegacy(List<String> msgs) {
+		return msgs.stream().map(TextUtils::deserializeLegacy).collect(Collectors.toList());
 	}
 
 	public static TextTemplateConverterBuilder converterBuilder() {
