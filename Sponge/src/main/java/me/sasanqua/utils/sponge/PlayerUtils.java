@@ -1,13 +1,14 @@
 package me.sasanqua.utils.sponge;
 
-import org.spongepowered.api.data.key.Keys;
+import org.spongepowered.api.data.Keys;
 import org.spongepowered.api.entity.Entity;
 import org.spongepowered.api.entity.EntityTypes;
 import org.spongepowered.api.entity.living.player.Player;
 import org.spongepowered.api.item.inventory.ItemStack;
-import org.spongepowered.api.item.inventory.entity.MainPlayerInventory;
-import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
+import org.spongepowered.api.item.inventory.entity.PrimaryPlayerInventory;
+import org.spongepowered.api.item.inventory.query.QueryTypes;
 import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResult;
+import org.spongepowered.api.util.Ticks;
 
 public class PlayerUtils {
 
@@ -15,14 +16,14 @@ public class PlayerUtils {
 		if (stack.isEmpty()) {
 			return;
 		}
-		InventoryTransactionResult result = player.getInventory()
-				.query(QueryOperationTypes.INVENTORY_TYPE.of(MainPlayerInventory.class))
+		InventoryTransactionResult result = player.inventory()
+				.query(QueryTypes.INVENTORY_TYPE.get().of(PrimaryPlayerInventory.class))
 				.offer(stack);
-		result.getRejectedItems().forEach(item -> {
-			Entity itemEntity = player.getWorld().createEntity(EntityTypes.ITEM, player.getPosition());
-			itemEntity.offer(Keys.REPRESENTED_ITEM, item);
-			itemEntity.offer(Keys.PICKUP_DELAY, 0);
-			player.getWorld().spawnEntity(itemEntity);
+		result.rejectedItems().forEach(item -> {
+			Entity itemEntity = player.world().createEntity(EntityTypes.ITEM, player.position());
+			itemEntity.offer(Keys.ITEM_STACK_SNAPSHOT, item);
+			itemEntity.offer(Keys.PICKUP_DELAY, Ticks.of(0));
+			player.world().spawnEntity(itemEntity);
 		});
 
 	}

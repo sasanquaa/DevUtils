@@ -8,11 +8,11 @@ import me.sasanqua.utils.common.ImmutableTuple;
 import me.sasanqua.utils.common.MutableTuple;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
+import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.scheduler.Task;
-import org.spongepowered.api.text.chat.ChatTypes;
+import org.spongepowered.api.util.Ticks;
 
 import java.util.*;
-import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -34,13 +34,11 @@ public class BarUtils {
 	private static volatile boolean started = false;
 	private static volatile int updated = 0;
 
-	public static void startTask(Object pluginInstance) {
+	public static void startTask() {
 		if (!started) {
 			started = true;
-			Task.builder()
-					.async()
-					.interval(Sponge.getScheduler().getPreferredTickInterval(), TimeUnit.MILLISECONDS)
-					.execute(task -> {
+			Sponge.asyncScheduler()
+					.submit(Task.builder().interval(Ticks.of(Sponge.server().targetTicksPerSecond())).execute(task -> {
 
 						LOCK.lock();
 
@@ -51,7 +49,7 @@ public class BarUtils {
 							while (iterator.hasNext()) {
 
 								UUID playerId = iterator.next();
-								Optional<Player> player = Sponge.getServer().getPlayer(playerId);
+								Optional<ServerPlayer> player = Sponge.server().player(playerId);
 
 								if (!player.isPresent() || !player.get().isOnline()) {
 									iterator.remove();
@@ -121,11 +119,11 @@ public class BarUtils {
 								});
 
 								if (messagesList.size() > 0) {
-									Task.builder().execute(() -> {
+									Sponge.server().scheduler().submit(Task.builder().execute(() -> {
 										player.get()
-												.sendMessage(ChatTypes.ACTION_BAR,
-														TextUtils.deserialize((String.join(" &7- ", messagesList))));
-									}).submit(pluginInstance);
+												.sendActionBar(
+														TextUtils.of((String.join(" &7- ", messagesList))));
+									}).build());
 								}
 
 							}
@@ -136,21 +134,20 @@ public class BarUtils {
 
 						updated++;
 
-					})
-					.submit(pluginInstance);
+					}).build());
 		}
 	}
 
 	public static void sendPercentageBar(Player player, String percentageId, float percent) {
 		if (LOCK.tryLock()) {
 			try {
-				PERCENTAGE_ACTIVES.get(player.getUniqueId()).removeIf(tuple -> tuple.getFirst().equals(percentageId));
-				PERCENTAGE_ACTIVES.put(player.getUniqueId(), entry(percentageId, percent));
+				PERCENTAGE_ACTIVES.get(player.uniqueId()).removeIf(tuple -> tuple.getFirst().equals(percentageId));
+				PERCENTAGE_ACTIVES.put(player.uniqueId(), entry(percentageId, percent));
 			} finally {
 				LOCK.unlock();
 			}
 		}
-		ACTIVE_PLAYERS.add(player.getUniqueId());
+		ACTIVE_PLAYERS.add(player.uniqueId());
 	}
 
 	public static void sendCooldownBar(Player player, String cooldownId, int seconds) {
@@ -163,20 +160,20 @@ public class BarUtils {
 				try {
 
 					if (removeIfExists) {
-						COOLDOWN_ACTIVES.get(player.getUniqueId())
+						COOLDOWN_ACTIVES.get(player.uniqueId())
 								.removeIf(tuple -> tuple.getFirst().equals(cooldownId));
 					}
 
-					if (!COOLDOWN_ACTIVES.get(player.getUniqueId())
+					if (!COOLDOWN_ACTIVES.get(player.uniqueId())
 							.stream()
 							.anyMatch(tuple -> tuple.getFirst().equals(cooldownId))) {
-						COOLDOWN_ACTIVES.put(player.getUniqueId(), entry(cooldownId, MutableTuple.of(seconds, 0)));
+						COOLDOWN_ACTIVES.put(player.uniqueId(), entry(cooldownId, MutableTuple.of(seconds, 0)));
 					}
 				} finally {
 					LOCK.unlock();
 				}
 			}
-			ACTIVE_PLAYERS.add(player.getUniqueId());
+			ACTIVE_PLAYERS.add(player.uniqueId());
 		}
 	}
 

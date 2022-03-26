@@ -1,6 +1,6 @@
 package me.sasanqua.utils.forge;
 
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.StringTextComponent;
 
 public final class TextUtils {
 
@@ -12,12 +12,12 @@ public final class TextUtils {
 		return str.replace("§", "&");
 	}
 
-	public static TextComponentString deserialize(String str) {
-		return new TextComponentString(toLegacy(str));
+	public static StringTextComponent deserialize(String str) {
+		return new StringTextComponent(toLegacy(str));
 	}
 
-	public static TextComponentString serialize(String str) {
-		return new TextComponentString(toModern(str));
+	public static StringTextComponent serialize(String str) {
+		return new StringTextComponent(toModern(str));
 	}
 
 }
