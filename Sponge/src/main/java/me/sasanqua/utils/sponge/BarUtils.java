@@ -41,7 +41,7 @@ public class BarUtils {
 			Sponge.asyncScheduler()
 					.submit(Task.builder()
 							.plugin(container)
-							.interval(Ticks.of(Sponge.server().targetTicksPerSecond()))
+							.interval(Ticks.of(1))
 							.execute(task -> {
 
 								LOCK.lock();
