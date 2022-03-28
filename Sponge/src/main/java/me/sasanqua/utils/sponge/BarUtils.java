@@ -93,7 +93,8 @@ public class BarUtils {
 
 						cooldownList.forEach(tuple -> {
 							String id = tuple.getFirst();
-							tuple.getSecond().get((totalSeconds, elapsedSeconds) -> {
+							ImmutableTuple<Integer, Integer> current = tuple.getSecond().toImmutable();
+							tuple.getSecond().set((totalSeconds, elapsedSeconds) -> {
 
 								float elapsedPercent = 1.0f * elapsedSeconds / totalSeconds;
 
@@ -106,12 +107,14 @@ public class BarUtils {
 
 								if (elapsedSeconds >= totalSeconds) {
 									COOLDOWN_ACTIVES.remove(playerId, tuple);
-									return;
+									return current;
 								}
 
 								if (updated % 20 == 0) {
-									tuple.getSecond().setSecond(elapsedSeconds + 1);
+									return ImmutableTuple.of(totalSeconds, elapsedSeconds + 1);
 								}
+
+								return current;
 							});
 
 						});
