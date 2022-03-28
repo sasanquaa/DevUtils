@@ -38,110 +38,99 @@ public class BarUtils {
 	public static void startTask(PluginContainer container) {
 		if (!started) {
 			started = true;
-			Sponge.asyncScheduler()
-					.submit(Task.builder()
-							.plugin(container)
-							.interval(Ticks.of(1))
-							.execute(task -> {
+			Sponge.asyncScheduler().submit(Task.builder().plugin(container).interval(Ticks.of(1)).execute(task -> {
 
-								LOCK.lock();
+				LOCK.lock();
 
-								try {
+				try {
 
-									Iterator<UUID> iterator = ACTIVE_PLAYERS.iterator();
+					Iterator<UUID> iterator = ACTIVE_PLAYERS.iterator();
 
-									while (iterator.hasNext()) {
+					while (iterator.hasNext()) {
 
-										UUID playerId = iterator.next();
-										Optional<ServerPlayer> player = Sponge.server().player(playerId);
+						UUID playerId = iterator.next();
+						Optional<ServerPlayer> player = Sponge.server().player(playerId);
 
-										if (!player.isPresent() || !player.get().isOnline()) {
-											iterator.remove();
-											continue;
-										}
+						if (!player.isPresent() || !player.get().isOnline()) {
+							iterator.remove();
+							continue;
+						}
 
-										List<ImmutableTuple<String, Float>> percentageList = PERCENTAGE_ACTIVES.get(
-														playerId)
-												.stream()
-												.sorted(Comparator.comparing(ImmutableTuple::getFirst,
-														Comparator.naturalOrder()))
-												.collect(Collectors.toList());
-										List<ImmutableTuple<String, MutableTuple<Integer, Integer>>> cooldownList = COOLDOWN_ACTIVES.get(
-														playerId)
-												.stream()
-												.sorted(Comparator.comparing(ImmutableTuple::getFirst,
-														Comparator.naturalOrder()))
-												.collect(Collectors.toList());
+						List<ImmutableTuple<String, Float>> percentageList = PERCENTAGE_ACTIVES.get(playerId)
+								.stream()
+								.sorted(Comparator.comparing(ImmutableTuple::getFirst, Comparator.naturalOrder()))
+								.collect(Collectors.toList());
+						List<ImmutableTuple<String, MutableTuple<Integer, Integer>>> cooldownList = COOLDOWN_ACTIVES.get(
+										playerId)
+								.stream()
+								.sorted(Comparator.comparing(ImmutableTuple::getFirst, Comparator.naturalOrder()))
+								.collect(Collectors.toList());
 
-										if (percentageList.isEmpty() && cooldownList.isEmpty()) {
-											iterator.remove();
-											continue;
-										}
+						if (percentageList.isEmpty() && cooldownList.isEmpty()) {
+							iterator.remove();
+							continue;
+						}
 
-										List<String> messagesList = Lists.newArrayList();
+						List<String> messagesList = Lists.newArrayList();
 
-										percentageList.forEach(tuple -> {
+						percentageList.forEach(tuple -> {
 
-											String id = tuple.getFirst();
-											float percent = tuple.getSecond();
+							String id = tuple.getFirst();
+							float percent = tuple.getSecond();
 
-											int colorBars = (int) (percent * BARS);
-											int grayBars = BARS - colorBars;
+							int colorBars = (int) (percent * BARS);
+							int grayBars = BARS - colorBars;
 
-											messagesList.add(String.format("&c%s %s%s", id,
-													Strings.repeat(getColorBar(percent), colorBars),
-													Strings.repeat(GRAY_BAR, grayBars)));
+							messagesList.add(
+									String.format("&c%s %s%s", id, Strings.repeat(getColorBar(percent), colorBars),
+											Strings.repeat(GRAY_BAR, grayBars)));
 
-											if (updated % 40 == 0) {
-												PERCENTAGE_ACTIVES.remove(playerId, tuple);
-											}
+							if (updated % 40 == 0) {
+								PERCENTAGE_ACTIVES.remove(playerId, tuple);
+							}
 
-										});
+						});
 
-										cooldownList.forEach(tuple -> {
-											String id = tuple.getFirst();
-											tuple.getSecond().get((totalSeconds, elapsedSeconds) -> {
+						cooldownList.forEach(tuple -> {
+							String id = tuple.getFirst();
+							tuple.getSecond().get((totalSeconds, elapsedSeconds) -> {
 
-												float elapsedPercent = 1.0f * elapsedSeconds / totalSeconds;
+								float elapsedPercent = 1.0f * elapsedSeconds / totalSeconds;
 
-												int colorBars = (int) ((1.0f - elapsedPercent) * BARS);
-												int grayBars = BARS - colorBars;
+								int colorBars = (int) ((1.0f - elapsedPercent) * BARS);
+								int grayBars = BARS - colorBars;
 
-												messagesList.add(String.format("&c%s %s%s &a%ds", id,
-														Strings.repeat(getColorBar(elapsedPercent), colorBars),
-														Strings.repeat(GRAY_BAR, grayBars),
-														totalSeconds - elapsedSeconds));
+								messagesList.add(String.format("&c%s %s%s &a%ds", id,
+										Strings.repeat(getColorBar(elapsedPercent), colorBars),
+										Strings.repeat(GRAY_BAR, grayBars), totalSeconds - elapsedSeconds));
 
-												if (elapsedSeconds >= totalSeconds) {
-													COOLDOWN_ACTIVES.remove(playerId, tuple);
-													return;
-												}
-
-												if (updated % 20 == 0) {
-													tuple.getSecond().setSecond(elapsedSeconds + 1);
-												}
-											});
-
-										});
-
-										if (messagesList.size() > 0) {
-											Sponge.server().scheduler().submit(Task.builder().execute(() -> {
-												player.get()
-														.sendActionBar(
-																TextUtils.of((String.join(" &7- ", messagesList))));
-											}).build());
-										}
-
-									}
-
-								} finally {
-									LOCK.unlock();
+								if (elapsedSeconds >= totalSeconds) {
+									COOLDOWN_ACTIVES.remove(playerId, tuple);
+									return;
 								}
 
-								updated++;
+								if (updated % 20 == 0) {
+									tuple.getSecond().setSecond(elapsedSeconds + 1);
+								}
+							});
 
-							})
-							.build());
+						});
+
+						if (messagesList.size() > 0) {
+							Sponge.server().scheduler().submit(Task.builder().plugin(container).execute(() -> {
+								player.get().sendActionBar(TextUtils.of((String.join(" &7- ", messagesList))));
+							}).build());
+						}
+
+					}
+
+				} finally {
+					LOCK.unlock();
+				}
+
+				updated++;
+
+			}).build());
 		}
 	}
 
