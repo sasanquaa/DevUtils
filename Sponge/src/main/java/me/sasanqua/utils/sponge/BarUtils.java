@@ -137,6 +137,16 @@ public class BarUtils {
 		}
 	}
 
+	public static void removePercentageBar(Player player, String percentageId) {
+		if (LOCK.tryLock()) {
+			try {
+				PERCENTAGE_ACTIVES.get(player.uniqueId()).removeIf(tuple -> tuple.getFirst().equals(percentageId));
+			} finally {
+				LOCK.unlock();
+			}
+		}
+	}
+
 	public static void sendPercentageBar(Player player, String percentageId, float percent) {
 		if (LOCK.tryLock()) {
 			try {
