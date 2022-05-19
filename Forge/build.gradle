@@ -10,7 +10,7 @@ buildscript {
 apply plugin: 'net.minecraftforge.gradle'
 
 minecraft {
-    mappings channel: "$forgeMappingChannel", version: "$forgeMappingVersion"
+    mappings channel: 'stable', version: '39-1.12'
 }
 
 dependencies {

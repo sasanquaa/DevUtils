@@ -87,28 +87,10 @@ public final class MutableTuple<K, V> {
 		}
 	}
 
-	public void setFirst(Function<K, K> function) {
-		lock.writeLock().lock();
-		try {
-			this.first = function.apply(this.first);
-		} finally {
-			lock.writeLock().unlock();
-		}
-	}
-
 	public void setSecond(V second) {
 		lock.writeLock().lock();
 		try {
 			this.second = second;
-		} finally {
-			lock.writeLock().unlock();
-		}
-	}
-
-	public void setSecond(Function<V, V> function) {
-		lock.writeLock().lock();
-		try {
-			this.second = function.apply(this.second);
 		} finally {
 			lock.writeLock().unlock();
 		}
@@ -119,17 +101,6 @@ public final class MutableTuple<K, V> {
 		try {
 			this.first = first;
 			this.second = second;
-		} finally {
-			lock.writeLock().unlock();
-		}
-	}
-
-	public void set(BiFunction<K, V, ImmutableTuple<K, V>> function) {
-		lock.writeLock().lock();
-		try {
-			ImmutableTuple<K, V> tuple = function.apply(this.first, this.second);
-			this.first = tuple.getFirst();
-			this.second = tuple.getSecond();
 		} finally {
 			lock.writeLock().unlock();
 		}

@@ -8,12 +8,11 @@ import me.sasanqua.utils.common.ImmutableTuple;
 import me.sasanqua.utils.common.MutableTuple;
 import org.spongepowered.api.Sponge;
 import org.spongepowered.api.entity.living.player.Player;
-import org.spongepowered.api.entity.living.player.server.ServerPlayer;
 import org.spongepowered.api.scheduler.Task;
-import org.spongepowered.api.util.Ticks;
-import org.spongepowered.plugin.PluginContainer;
+import org.spongepowered.api.text.chat.ChatTypes;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 import java.util.stream.Collectors;
 
@@ -35,128 +34,123 @@ public class BarUtils {
 	private static volatile boolean started = false;
 	private static volatile int updated = 0;
 
-	public static void startTask(PluginContainer container) {
+	public static void startTask(Object pluginInstance) {
 		if (!started) {
 			started = true;
-			Sponge.asyncScheduler().submit(Task.builder().plugin(container).interval(Ticks.of(1)).execute(task -> {
+			Task.builder()
+					.async()
+					.interval(Sponge.getScheduler().getPreferredTickInterval(), TimeUnit.MILLISECONDS)
+					.execute(task -> {
 
-				LOCK.lock();
+						LOCK.lock();
 
-				try {
+						try {
 
-					Iterator<UUID> iterator = ACTIVE_PLAYERS.iterator();
+							Iterator<UUID> iterator = ACTIVE_PLAYERS.iterator();
 
-					while (iterator.hasNext()) {
+							while (iterator.hasNext()) {
 
-						UUID playerId = iterator.next();
-						Optional<ServerPlayer> player = Sponge.server().player(playerId);
+								UUID playerId = iterator.next();
+								Optional<Player> player = Sponge.getServer().getPlayer(playerId);
 
-						if (!player.isPresent() || !player.get().isOnline()) {
-							iterator.remove();
-							continue;
-						}
+								if (!player.isPresent() || !player.get().isOnline()) {
+									iterator.remove();
+									continue;
+								}
 
-						List<ImmutableTuple<String, Float>> percentageList = PERCENTAGE_ACTIVES.get(playerId)
-								.stream()
-								.sorted(Comparator.comparing(ImmutableTuple::getFirst, Comparator.naturalOrder()))
-								.collect(Collectors.toList());
-						List<ImmutableTuple<String, MutableTuple<Integer, Integer>>> cooldownList = COOLDOWN_ACTIVES.get(
-										playerId)
-								.stream()
-								.sorted(Comparator.comparing(ImmutableTuple::getFirst, Comparator.naturalOrder()))
-								.collect(Collectors.toList());
+								List<ImmutableTuple<String, Float>> percentageList = PERCENTAGE_ACTIVES.get(playerId)
+										.stream()
+										.sorted(Comparator.comparing(ImmutableTuple::getFirst,
+												Comparator.naturalOrder()))
+										.collect(Collectors.toList());
+								List<ImmutableTuple<String, MutableTuple<Integer, Integer>>> cooldownList = COOLDOWN_ACTIVES.get(
+												playerId)
+										.stream()
+										.sorted(Comparator.comparing(ImmutableTuple::getFirst,
+												Comparator.naturalOrder()))
+										.collect(Collectors.toList());
 
-						if (percentageList.isEmpty() && cooldownList.isEmpty()) {
-							iterator.remove();
-							continue;
-						}
+								if (percentageList.isEmpty() && cooldownList.isEmpty()) {
+									iterator.remove();
+									continue;
+								}
 
-						List<String> messagesList = Lists.newArrayList();
+								List<String> messagesList = Lists.newArrayList();
 
-						percentageList.forEach(tuple -> {
+								percentageList.forEach(tuple -> {
 
-							String id = tuple.getFirst();
-							float percent = tuple.getSecond();
+									String id = tuple.getFirst();
+									float percent = tuple.getSecond();
 
-							int colorBars = (int) (percent * BARS);
-							int grayBars = BARS - colorBars;
+									int colorBars = (int) (percent * BARS);
+									int grayBars = BARS - colorBars;
 
-							messagesList.add(
-									String.format("&c%s %s%s", id, Strings.repeat(getColorBar(percent), colorBars),
+									messagesList.add(String.format("&c%s %s%s", id,
+											Strings.repeat(getColorBar(percent), colorBars),
 											Strings.repeat(GRAY_BAR, grayBars)));
 
-							if (updated % 40 == 0) {
-								PERCENTAGE_ACTIVES.remove(playerId, tuple);
+									if (updated % 40 == 0) {
+										PERCENTAGE_ACTIVES.remove(playerId, tuple);
+									}
+
+								});
+
+								cooldownList.forEach(tuple -> {
+									String id = tuple.getFirst();
+									tuple.getSecond().get((totalSeconds, elapsedSeconds) -> {
+
+										float elapsedPercent = 1.0f * elapsedSeconds / totalSeconds;
+
+										int colorBars = (int) ((1.0f - elapsedPercent) * BARS);
+										int grayBars = BARS - colorBars;
+
+										messagesList.add(String.format("&c%s %s%s &a%ds", id,
+												Strings.repeat(getColorBar(elapsedPercent), colorBars),
+												Strings.repeat(GRAY_BAR, grayBars), totalSeconds - elapsedSeconds));
+
+										if (elapsedSeconds >= totalSeconds) {
+											COOLDOWN_ACTIVES.remove(playerId, tuple);
+											return;
+										}
+
+										if (updated % 20 == 0) {
+											tuple.getSecond().setSecond(elapsedSeconds + 1);
+										}
+									});
+
+								});
+
+								if (messagesList.size() > 0) {
+									Task.builder().execute(() -> {
+										player.get()
+												.sendMessage(ChatTypes.ACTION_BAR,
+														TextUtils.deserialize((String.join(" &7- ", messagesList))));
+									}).submit(pluginInstance);
+								}
+
 							}
 
-						});
-
-						cooldownList.forEach(tuple -> {
-							String id = tuple.getFirst();
-							ImmutableTuple<Integer, Integer> current = tuple.getSecond().toImmutable();
-							tuple.getSecond().set((totalSeconds, elapsedSeconds) -> {
-
-								float elapsedPercent = 1.0f * elapsedSeconds / totalSeconds;
-
-								int colorBars = (int) ((1.0f - elapsedPercent) * BARS);
-								int grayBars = BARS - colorBars;
-
-								messagesList.add(String.format("&c%s %s%s &a%ds", id,
-										Strings.repeat(getColorBar(elapsedPercent), colorBars),
-										Strings.repeat(GRAY_BAR, grayBars), totalSeconds - elapsedSeconds));
-
-								if (elapsedSeconds >= totalSeconds) {
-									COOLDOWN_ACTIVES.remove(playerId, tuple);
-									return current;
-								}
-
-								if (updated % 20 == 0) {
-									return ImmutableTuple.of(totalSeconds, elapsedSeconds + 1);
-								}
-
-								return current;
-							});
-
-						});
-
-						if (messagesList.size() > 0) {
-							Sponge.server().scheduler().submit(Task.builder().plugin(container).execute(() -> {
-								player.get().sendActionBar(TextUtils.of((String.join(" &7- ", messagesList))));
-							}).build());
+						} finally {
+							LOCK.unlock();
 						}
 
-					}
+						updated++;
 
-				} finally {
-					LOCK.unlock();
-				}
-
-				updated++;
-
-			}).build());
-		}
-	}
-
-	public static void removePercentageBar(Player player, String percentageId) {
-		if (LOCK.tryLock()) {
-			try {
-				PERCENTAGE_ACTIVES.get(player.uniqueId()).removeIf(tuple -> tuple.getFirst().equals(percentageId));
-			} finally {
-				LOCK.unlock();
-			}
+					})
+					.submit(pluginInstance);
 		}
 	}
 
 	public static void sendPercentageBar(Player player, String percentageId, float percent) {
 		if (LOCK.tryLock()) {
 			try {
-				PERCENTAGE_ACTIVES.get(player.uniqueId()).removeIf(tuple -> tuple.getFirst().equals(percentageId));
-				PERCENTAGE_ACTIVES.put(player.uniqueId(), entry(percentageId, percent));
+				PERCENTAGE_ACTIVES.get(player.getUniqueId()).removeIf(tuple -> tuple.getFirst().equals(percentageId));
+				PERCENTAGE_ACTIVES.put(player.getUniqueId(), entry(percentageId, percent));
 			} finally {
 				LOCK.unlock();
 			}
 		}
-		ACTIVE_PLAYERS.add(player.uniqueId());
+		ACTIVE_PLAYERS.add(player.getUniqueId());
 	}
 
 	public static void sendCooldownBar(Player player, String cooldownId, int seconds) {
@@ -169,19 +163,20 @@ public class BarUtils {
 				try {
 
 					if (removeIfExists) {
-						COOLDOWN_ACTIVES.get(player.uniqueId()).removeIf(tuple -> tuple.getFirst().equals(cooldownId));
+						COOLDOWN_ACTIVES.get(player.getUniqueId())
+								.removeIf(tuple -> tuple.getFirst().equals(cooldownId));
 					}
 
-					if (!COOLDOWN_ACTIVES.get(player.uniqueId())
+					if (!COOLDOWN_ACTIVES.get(player.getUniqueId())
 							.stream()
 							.anyMatch(tuple -> tuple.getFirst().equals(cooldownId))) {
-						COOLDOWN_ACTIVES.put(player.uniqueId(), entry(cooldownId, MutableTuple.of(seconds, 0)));
+						COOLDOWN_ACTIVES.put(player.getUniqueId(), entry(cooldownId, MutableTuple.of(seconds, 0)));
 					}
 				} finally {
 					LOCK.unlock();
 				}
 			}
-			ACTIVE_PLAYERS.add(player.uniqueId());
+			ACTIVE_PLAYERS.add(player.getUniqueId());
 		}
 	}
 

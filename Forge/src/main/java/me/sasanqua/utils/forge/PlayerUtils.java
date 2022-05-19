@@ -1,23 +1,23 @@
 package me.sasanqua.utils.forge;
 
-import net.minecraft.entity.item.ItemEntity;
-import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.entity.item.EntityItem;
+import net.minecraft.entity.player.EntityPlayer;
 import net.minecraft.item.ItemStack;
 
 public final class PlayerUtils {
 
-	public static void offerItemStack(PlayerEntity player, ItemStack stack) {
+	public static void offerItemStack(EntityPlayer player, ItemStack stack) {
 		if (stack.isEmpty()) {
 			return;
 		}
-		boolean flag = player.addItem(stack);
+		boolean flag = player.addItemStackToInventory(stack);
 		if (flag) {
-			player.inventoryMenu.broadcastChanges();
+			player.inventoryContainer.detectAndSendChanges();
 		} else {
-			ItemEntity entityItem = player.drop(stack, false);
+			EntityItem entityItem = player.entityDropItem(stack, 0.5F);
 			if (entityItem != null) {
-				entityItem.setNoPickUpDelay();
-				entityItem.setOwner(player.getUUID());
+				entityItem.setNoPickupDelay();
+				entityItem.setOwner(player.getName());
 			}
 		}
 	}
