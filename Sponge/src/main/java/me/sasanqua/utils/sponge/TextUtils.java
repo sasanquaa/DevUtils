@@ -1,8 +1,7 @@
 package me.sasanqua.utils.sponge;
 
-import com.google.common.base.Preconditions;
-import com.google.common.collect.Lists;
 import me.sasanqua.utils.common.Builder;
+import me.sasanqua.utils.common.PreconditionUtils;
 import org.spongepowered.api.text.Text;
 import org.spongepowered.api.text.TextRepresentable;
 import org.spongepowered.api.text.TextTemplate;
@@ -18,7 +17,7 @@ import java.util.stream.Collectors;
 public final class TextUtils {
 
 	public static final TextTemplateConverter PERCENT_CONVERTER = converterBuilder().build();
-	public static final TextTemplateConverter CURLY_BRACKET_CONVERTER = converterBuilder().openArg("{")
+	public static final TextTemplateConverter CURLY_CONVERTER = converterBuilder().openArg("{")
 			.closeArg("}")
 			.pattern(Pattern.compile("\\{([^{}\\s]+)}", Pattern.CASE_INSENSITIVE))
 			.build();
@@ -39,20 +38,20 @@ public final class TextUtils {
 		return TextSerializers.LEGACY_FORMATTING_CODE.serialize(text);
 	}
 
-	public static List<Text> lore(String... msgs) {
-		return lore(Arrays.asList(msgs));
+	public static List<Text> lore(String... messages) {
+		return lore(Arrays.asList(messages));
 	}
 
-	public static List<Text> lore(List<String> msgs) {
-		return msgs.stream().map(TextUtils::deserialize).collect(Collectors.toList());
+	public static List<Text> lore(List<String> messages) {
+		return messages.stream().map(TextUtils::deserialize).collect(Collectors.toList());
 	}
 
-	public static List<Text> loreLegacy(String... msgs) {
-		return loreLegacy(Arrays.asList(msgs));
+	public static List<Text> loreLegacy(String... messages) {
+		return loreLegacy(Arrays.asList(messages));
 	}
 
-	public static List<Text> loreLegacy(List<String> msgs) {
-		return msgs.stream().map(TextUtils::deserializeLegacy).collect(Collectors.toList());
+	public static List<Text> loreLegacy(List<String> messages) {
+		return messages.stream().map(TextUtils::deserializeLegacy).collect(Collectors.toList());
 	}
 
 	public static TextTemplateConverterBuilder converterBuilder() {
@@ -95,6 +94,9 @@ public final class TextUtils {
 		private String closeArg = "%";
 		private Pattern pattern = Pattern.compile("%([^%\\s]+)%", Pattern.CASE_INSENSITIVE);
 
+		TextTemplateConverterBuilder() {
+		}
+
 		public TextTemplateConverterBuilder openArg(String openArg) {
 			this.openArg = openArg;
 			return this;
@@ -112,9 +114,9 @@ public final class TextUtils {
 
 		@Override
 		public TextTemplateConverter build() {
-			Preconditions.checkNotNull(openArg, "Open argument cannot be null");
-			Preconditions.checkNotNull(closeArg, "Close argument cannot be null");
-			Preconditions.checkNotNull(pattern, "Pattern cannot be null");
+			PreconditionUtils.checkNotNull(openArg, "Open argument cannot be null");
+			PreconditionUtils.checkNotNull(closeArg, "Close argument cannot be null");
+			PreconditionUtils.checkNotNull(pattern, "Pattern cannot be null");
 			return new TextTemplateConverter(this);
 		}
 

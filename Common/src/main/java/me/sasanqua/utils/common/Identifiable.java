@@ -1,7 +1,7 @@
 package me.sasanqua.utils.common;
 
-public interface Identifiable {
+public interface Identifiable<T> {
 
-	String getId();
+	T getId();
 
 }

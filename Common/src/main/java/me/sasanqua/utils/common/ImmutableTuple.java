@@ -1,5 +1,7 @@
 package me.sasanqua.utils.common;
 
+import org.checkerframework.checker.nullness.qual.Nullable;
+
 import java.util.Objects;
 import java.util.function.BiFunction;
 
@@ -25,17 +27,16 @@ public final class ImmutableTuple<K, V> {
 		return this.second;
 	}
 
-	public MutableTuple<K, V> toMutable() {
-		return MutableTuple.of(first, second, hashCodeFunction, equalsFunction);
-	}
-
 	@Override
 	public int hashCode() {
 		return this.hashCodeFunction.apply(first, second);
 	}
 
 	@Override
-	public boolean equals(Object obj) {
+	public boolean equals(@Nullable Object obj) {
+		if (obj == null) {
+			return false;
+		}
 		return this.equalsFunction.apply(first, second, obj);
 	}
 

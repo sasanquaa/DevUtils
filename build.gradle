@@ -1,3 +1,7 @@
+plugins {
+    id 'org.checkerframework' version '0.6.10' apply false
+}
+
 configurations {
     bundleJar {
         transitive = false
@@ -10,7 +14,7 @@ allprojects {
     version "1.0.0"
 
     ext {
-        spongeVersion = '7.3.0'
+        spongeVersion = '7.4.0'
         forgeVersion = '1.12.2-14.23.5.2860'
     }
 
@@ -18,12 +22,14 @@ allprojects {
         mavenCentral()
         maven { url 'https://repo.spongepowered.org/maven' }
     }
+
 }
 
 
 subprojects {
     apply plugin: "java"
     apply plugin: "maven-publish"
+    apply plugin: 'org.checkerframework'
 
     jar {
         from project(":Common").sourceSets.getByName("main").output
@@ -32,6 +38,15 @@ subprojects {
     java {
         withSourcesJar()
         withJavadocJar()
+    }
+
+    dependencies {
+        compileOnly 'org.checkerframework:checker-qual:3.21.4'
+        checkerFramework 'org.checkerframework:checker:3.21.4'
+    }
+
+    checkerFramework {
+        checkers = ['org.checkerframework.checker.nullness.NullnessChecker']
     }
 
     publishing {

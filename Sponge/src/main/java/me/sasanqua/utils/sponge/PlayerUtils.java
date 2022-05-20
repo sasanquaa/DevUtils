@@ -9,7 +9,7 @@ import org.spongepowered.api.item.inventory.entity.MainPlayerInventory;
 import org.spongepowered.api.item.inventory.query.QueryOperationTypes;
 import org.spongepowered.api.item.inventory.transaction.InventoryTransactionResult;
 
-public class PlayerUtils {
+public final class PlayerUtils {
 
 	public static void offerItemStack(Player player, ItemStack stack) {
 		if (stack.isEmpty()) {
