@@ -87,7 +87,7 @@ public final class TextUtils {
 
 	}
 
-	public static class TextPlaceholderParser {
+	public static final class TextPlaceholderParser {
 
 		private final Map<String, PlaceholderContext.PlaceholderContextBuilder> contextBuilderMap = new HashMap<>();
 		private final String input;
@@ -145,7 +145,7 @@ public final class TextUtils {
 
 	}
 
-	public static class PlaceholderContext {
+	public static final class PlaceholderContext {
 
 		private final List<String> arguments;
 		private final ListMultimap<Class<?>, Object> contextObjects;
@@ -171,7 +171,7 @@ public final class TextUtils {
 					.collect(Collectors.toList());
 		}
 
-		private static class PlaceholderContextBuilder {
+		private static final class PlaceholderContextBuilder {
 
 			private List<String> arguments = new ArrayList<>();
 			private ListMultimap<Class<?>, Object> contextObjects = ArrayListMultimap.create();
@@ -196,7 +196,7 @@ public final class TextUtils {
 
 	}
 
-	private static class TextCallbackCommand extends CommandBase {
+	private static final class TextCallbackCommand extends CommandBase {
 
 		@Override
 		public String getName() {
@@ -232,7 +232,7 @@ public final class TextUtils {
 
 	}
 
-	private static class TextCallback {
+	private static final class TextCallback {
 
 		private UUID callbackUUID;
 		private Consumer<EntityPlayerMP> consumer;

@@ -5,9 +5,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 public final class PreconditionUtils {
 
 	public static void checkArgument(boolean expression) {
-		if (!expression) {
-			throw new IllegalArgumentException();
-		}
+		checkArgument(expression, null);
 	}
 
 	public static void checkArgument(boolean expression, @Nullable Object message) {
@@ -17,10 +15,7 @@ public final class PreconditionUtils {
 	}
 
 	public static <T> T checkNotNull(@Nullable T value) {
-		if (value == null) {
-			throw new NullPointerException();
-		}
-		return value;
+		return checkNotNull(value, null);
 	}
 
 	public static <T> T checkNotNull(@Nullable T value, @Nullable Object message) {
@@ -31,9 +26,7 @@ public final class PreconditionUtils {
 	}
 
 	public static void checkState(boolean state) {
-		if (!state) {
-			throw new IllegalStateException();
-		}
+		checkState(state, null);
 	}
 
 	public static void checkState(boolean state, @Nullable String message) {
