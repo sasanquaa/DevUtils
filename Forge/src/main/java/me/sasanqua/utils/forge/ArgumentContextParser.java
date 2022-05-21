@@ -1,7 +1,7 @@
 package me.sasanqua.utils.forge;
 
 import me.sasanqua.utils.common.PreconditionUtils;
-import net.minecraft.command.CommandException;
+import me.sasanqua.utils.forge.exception.ArgumentParsingException;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
 
 import java.util.*;
@@ -28,37 +28,33 @@ public final class ArgumentContextParser {
 		return usage;
 	}
 
-	public ArgumentContext parse(String[] arguments) throws CommandException {
+	public ArgumentContext parse(String[] arguments) throws ArgumentParsingException {
 		ArgumentReader reader = new ArgumentReader(arguments);
 		Map<ArgumentKey<?>, Object> values = new HashMap<>();
 		for (ArgumentKey<?> key : keySet) {
 			if (key.isFlag()) {
 				if (reader.peek().startsWith(FLAG_PREFIX)) {
 					if (!reader.canAdvance()) {
-						throw new CommandException("Flag " + reader.peek() + " provided but cannot continue!");
+						throw new ArgumentParsingException("Flag " + reader.peek() + " provided but cannot continue!");
 					}
 					if (reader.peek().startsWith(FLAG_PREFIX + key.getId())) {
 						reader.advance();
-						tryParse(key.getParser(), reader).ifPresent(value -> values.put(key, value));
+						values.put(key, parseOrThrow(key.getParser(), reader));
 					}
 				}
 				continue;
 			}
-			tryParse(key.getParser(), reader).ifPresent(value -> values.put(key, value));
-		}
-		if (values.keySet().stream().filter(k -> !k.isFlag()).count() != nonFlagKeys) {
-			throw new CommandException("Invalid arguments provided");
+			values.put(key, parseOrThrow(key.getParser(), reader));
 		}
 		return new ArgumentContext(values);
 	}
 
-	private Optional<Object> tryParse(ArgumentParser<?> parser, ArgumentReader reader) {
+	private Object parseOrThrow(ArgumentParser<?> parser, ArgumentReader reader) throws ArgumentParsingException {
 		try {
-			return Optional.of(PreconditionUtils.checkNotNull(parser.parse(reader)));
+			return PreconditionUtils.checkNotNull(parser.parse(reader));
 		} catch (Exception e) {
-			e.printStackTrace();
+			throw new ArgumentParsingException(String.valueOf(e.getMessage()), e);
 		}
-		return Optional.empty();
 	}
 
 	private String requiredUsage(@UnknownInitialization ArgumentContextParser this, ArgumentKey<?> key) {

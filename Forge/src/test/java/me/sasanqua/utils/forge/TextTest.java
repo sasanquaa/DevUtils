@@ -11,7 +11,7 @@ public class TextTest {
 		TextUtils.registerPlaceholder("name", context -> context.getAssociation(String.class));
 		TextUtils.registerPlaceholder("name2", context -> context.getAssociation(String.class));
 
-		String value = "Hello {name}, {name2}!";
+		String value = "Hello {name}, {name2}, {name3}!";
 		String parsed = TextUtils.parsePlaceholder(value)
 				.add("name", "SASANQUA")
 				.add("name2", "SASANQUA")

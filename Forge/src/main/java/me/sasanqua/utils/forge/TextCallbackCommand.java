@@ -8,29 +8,13 @@ import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.event.ClickEvent;
 
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Consumer;
 
 final class TextCallbackCommand extends CommandBase {
 
 	private static final Map<UUID, TextCallback> CALLBACK_MAP = new HashMap<>();
 	private static String callbackCommand = "tcallback";
-
-	static <T extends ITextComponent> T addCallback(T text, Consumer<EntityPlayerMP> consumer, boolean invokeOnlyOnce) {
-		TextCallback callback = new TextCallback(consumer, invokeOnlyOnce);
-		CALLBACK_MAP.put(callback.getUUID(), callback);
-		ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-				"/" + callbackCommand + " " + callback.getUUID().toString());
-		text.getStyle().setClickEvent(clickEvent);
-		return text;
-	}
-
-	static String getCallbackCommand() {
-		return callbackCommand;
-	}
-
-	static void setCallbackCommand(String command) {
-		callbackCommand = command;
-	}
 
 	@Override
 	public String getName() {
@@ -51,6 +35,7 @@ final class TextCallbackCommand extends CommandBase {
 					UUID uuid = UUID.fromString(args[0]);
 					if (CALLBACK_MAP.containsKey(uuid)) {
 						CALLBACK_MAP.get(uuid).tryInvokeConsumer(player);
+						CALLBACK_MAP.values().removeIf(t -> System.currentTimeMillis() > t.persistTimestamp);
 					}
 				} catch (IllegalArgumentException ignored) {
 				}
@@ -63,21 +48,35 @@ final class TextCallbackCommand extends CommandBase {
 		return true;
 	}
 
+	static <T extends ITextComponent> T addCallback(T text, Consumer<EntityPlayerMP> consumer, boolean invokeOnlyOnce) {
+		TextCallback callback = new TextCallback(consumer, invokeOnlyOnce);
+		CALLBACK_MAP.put(callback.id, callback);
+		ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+				"/" + callbackCommand + " " + callback.id);
+		text.getStyle().setClickEvent(clickEvent);
+		return text;
+	}
+
+	static String getCallbackCommand() {
+		return callbackCommand;
+	}
+
+	static void setCallbackCommand(String command) {
+		callbackCommand = command;
+	}
+
 	private static final class TextCallback {
 
-		UUID callbackUUID;
-		Consumer<EntityPlayerMP> consumer;
-		boolean onlyInvokeOnce;
-		Set<UUID> playersInvoked = new HashSet<>();
+		final UUID id;
+		final Consumer<EntityPlayerMP> consumer;
+		final Set<UUID> playersInvoked = new HashSet<>();
+		final boolean onlyInvokeOnce;
+		final long persistTimestamp = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10);
 
 		TextCallback(Consumer<EntityPlayerMP> consumer, boolean onlyInvokeOnce) {
-			this.callbackUUID = UUID.randomUUID();
+			this.id = UUID.randomUUID();
 			this.consumer = consumer;
 			this.onlyInvokeOnce = onlyInvokeOnce;
-		}
-
-		UUID getUUID() {
-			return callbackUUID;
 		}
 
 		void tryInvokeConsumer(EntityPlayerMP player) {
