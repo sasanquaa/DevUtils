@@ -1,18 +1,10 @@
 package me.sasanqua.utils.forge;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.ListMultimap;
-import com.google.common.collect.Lists;
-import com.google.common.collect.Multimaps;
-import me.sasanqua.utils.common.PreconditionUtils;
-import net.minecraft.command.CommandBase;
 import net.minecraft.command.ICommand;
-import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.event.ClickEvent;
+import org.checkerframework.checker.nullness.qual.NonNull;
 
 import java.util.*;
 import java.util.function.Consumer;
@@ -23,10 +15,10 @@ import java.util.stream.Stream;
 
 public final class TextUtils {
 
-	private static final Pattern PLACEHOLDER_PATTERN = Pattern.compile("(^[^{]+)?([{][^{} ]+[}])(.+)?");
+	public static final PlaceholderMatcher CURLY_PLACEHOLDER_MATCHER = placeholderMatcher(
+			Pattern.compile("[{][^{}\\s]+[}]"), ",", "|");
+
 	private static final Map<String, PlaceholderParser> PLACEHOLDER_PARSER_MAP = new HashMap<>();
-	private static final Map<UUID, TextCallback> CALLBACK_MAP = new HashMap<>();
-	private static String callbackCommand = "tucallback";
 
 	public static String toLegacy(String str) {
 		return str.replace("&", "§");
@@ -57,12 +49,15 @@ public final class TextUtils {
 	}
 
 	public static <T extends ITextComponent> T addCallback(T text, Consumer<EntityPlayerMP> consumer, boolean invokeOnlyOnce) {
-		TextCallback callback = new TextCallback(consumer, invokeOnlyOnce);
-		CALLBACK_MAP.put(callback.getUUID(), callback);
-		ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND,
-				"/" + callbackCommand + " " + callback.getUUID().toString());
-		text.getStyle().setClickEvent(clickEvent);
-		return text;
+		return TextCallbackCommand.addCallback(text, consumer, invokeOnlyOnce);
+	}
+
+	public static String getCallbackCommand() {
+		return TextCallbackCommand.getCallbackCommand();
+	}
+
+	public static void setCallbackCommand(String command) {
+		TextCallbackCommand.setCallbackCommand(command);
 	}
 
 	public static void registerPlaceholder(String key, PlaceholderParser parser) {
@@ -73,24 +68,15 @@ public final class TextUtils {
 		return new TextPlaceholderParser(input);
 	}
 
-	public String getCallbackCommand() {
-		return callbackCommand;
-	}
-
-	public void setCallbackCommand(String command) {
-		callbackCommand = command;
-	}
-
-	@FunctionalInterface
-	public interface PlaceholderParser {
-		Optional<String> parse(PlaceholderContext context);
-
+	public static PlaceholderMatcher placeholderMatcher(Pattern pattern, String argumentsSeparator, String placeholderArgumentsSepartor) {
+		return new PlaceholderMatcher(pattern, argumentsSeparator, placeholderArgumentsSepartor);
 	}
 
 	public static final class TextPlaceholderParser {
 
 		private final Map<String, PlaceholderContext.PlaceholderContextBuilder> contextBuilderMap = new HashMap<>();
 		private final String input;
+		private PlaceholderMatcher placeholderMatcher = CURLY_PLACEHOLDER_MATCHER;
 
 		private TextPlaceholderParser(String input) {
 			this.input = input;
@@ -103,159 +89,36 @@ public final class TextUtils {
 			return this;
 		}
 
+		public TextPlaceholderParser matcher(PlaceholderMatcher matcher) {
+			this.placeholderMatcher = matcher;
+			return this;
+		}
+
 		public TextComponentString parse() {
 			StringBuilder output = new StringBuilder();
-			String working = input;
+			Matcher matcher = placeholderMatcher.getPattern().matcher(input);
 
-			while (!working.isEmpty()) {
-				Matcher matcher = PLACEHOLDER_PATTERN.matcher(working);
-				if (matcher.find()) {
-					String[] token = PreconditionUtils.checkNotNull(matcher.group(2))
-							.replace("{", "")
-							.replace("}", "")
-							.toLowerCase()
-							.split("\\|");
+			int i = 0;
+			for (; matcher.find(); i = matcher.end()) {
+				output.append(input, i, matcher.start());
+				String[] tokens = input.substring(matcher.start() + 1, matcher.end() - 1)
+						.split(Pattern.quote(placeholderMatcher.getPlaceholderArgumentsSeparator()));
+				String placeholder = tokens[0];
+				String[] arguments = tokens.length > 1 ? String.join("",
+								(@NonNull String[]) Arrays.copyOfRange(tokens, 1, tokens.length))
+						.split(Pattern.quote(placeholderMatcher.getArgumentsSeparator())) : new String[0];
+				String result = Optional.ofNullable(contextBuilderMap.get(placeholder))
+						.map(contextBuilder -> contextBuilder.arguments(arguments).build())
+						.flatMap(context -> PLACEHOLDER_PARSER_MAP.getOrDefault(placeholder, (c) -> Optional.empty())
+								.parse(context))
+						.orElse(matcher.group());
+				output.append(result);
+			}
 
-					String placeholder = token[0];
-					String[] arguments = token.length > 1 ? token[1].split(",") : new String[0];
-
-					if (matcher.group(1) != null) {
-						output.append(matcher.group(1));
-						working = working.replaceFirst("^[^{]+", "");
-					}
-					Optional<String> result = Optional.ofNullable(contextBuilderMap.get(placeholder))
-							.map(contextBuilder -> contextBuilder.arguments(arguments).build())
-							.flatMap(
-									context -> PLACEHOLDER_PARSER_MAP.getOrDefault(placeholder, (c) -> Optional.empty())
-											.parse(context));
-					if (result.isPresent()) {
-						output.append(result.get());
-					} else {
-						output.append(matcher.group(2));
-					}
-
-					working = working.replaceFirst("[{][^{} ]+[}]", "");
-				} else {
-					output.append(working);
-					break;
-				}
+			if (i < input.length()) {
+				output.append(input.substring(i));
 			}
 			return deserialize(output.toString());
-		}
-
-	}
-
-	public static final class PlaceholderContext {
-
-		private final List<String> arguments;
-		private final ListMultimap<Class<?>, Object> contextObjects;
-
-		private PlaceholderContext(PlaceholderContextBuilder builder) {
-			this.arguments = Collections.unmodifiableList(builder.arguments);
-			this.contextObjects = Multimaps.unmodifiableListMultimap(builder.contextObjects);
-		}
-
-		public List<String> getArguments() {
-			return arguments;
-		}
-
-		public <T> Optional<T> getAssociation(Class<T> clazz) {
-			return contextObjects.get(clazz).stream().findFirst().map(clazz::cast);
-		}
-
-		public <T> List<T> getAllAssociations(Class<T> clazz) {
-			return contextObjects.get(clazz)
-					.stream()
-					.filter(Objects::nonNull)
-					.map(clazz::cast)
-					.collect(Collectors.toList());
-		}
-
-		private static final class PlaceholderContextBuilder {
-
-			private List<String> arguments = new ArrayList<>();
-			private ListMultimap<Class<?>, Object> contextObjects = ArrayListMultimap.create();
-
-			private PlaceholderContextBuilder arguments(String... arguments) {
-				this.arguments = Lists.newArrayList(arguments);
-				return this;
-			}
-
-			private PlaceholderContextBuilder objects(Object... objects) {
-				for (Object object : objects) {
-					contextObjects.put(object.getClass(), object);
-				}
-				return this;
-			}
-
-			private PlaceholderContext build() {
-				return new PlaceholderContext(this);
-			}
-
-		}
-
-	}
-
-	private static final class TextCallbackCommand extends CommandBase {
-
-		@Override
-		public String getName() {
-			return callbackCommand;
-		}
-
-		@Override
-		public String getUsage(ICommandSender sender) {
-			return "/" + callbackCommand + " <uuid>";
-		}
-
-		@Override
-		public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
-			if (sender instanceof EntityPlayerMP) {
-				EntityPlayerMP player = (EntityPlayerMP) sender;
-				if (args.length == 1) {
-					try {
-						UUID uuid = UUID.fromString(args[0]);
-						if (CALLBACK_MAP.containsKey(uuid)) {
-							CALLBACK_MAP.get(uuid).tryInvokeConsumer(player);
-						}
-					} catch (IllegalArgumentException ignored) {
-
-					}
-				}
-			}
-		}
-
-		@Override
-		public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
-			return true;
-		}
-
-	}
-
-	private static final class TextCallback {
-
-		private UUID callbackUUID;
-		private Consumer<EntityPlayerMP> consumer;
-		private boolean onlyInvokeOnce;
-
-		private Set<UUID> playersInvoked = new HashSet<>();
-
-		TextCallback(Consumer<EntityPlayerMP> consumer, boolean onlyInvokeOnce) {
-			this.callbackUUID = UUID.randomUUID();
-			this.consumer = consumer;
-			this.onlyInvokeOnce = onlyInvokeOnce;
-		}
-
-		UUID getUUID() {
-			return callbackUUID;
-		}
-
-		void tryInvokeConsumer(EntityPlayerMP player) {
-			if (onlyInvokeOnce && playersInvoked.contains(player.getUniqueID())) {
-				return;
-			}
-			consumer.accept(player);
-			playersInvoked.add(player.getUniqueID());
 		}
 
 	}

@@ -5,6 +5,7 @@ import me.sasanqua.utils.common.PreconditionUtils;
 import net.minecraftforge.common.MinecraftForge;
 import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.TickEvent;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Iterator;
 import java.util.Set;
@@ -18,25 +19,23 @@ public final class Task {
 	private final Consumer<Task> consumer;
 
 	private final long interval;
-
-	private long currentIteration;
-
 	private final long iterations;
-
 	private final long timestamp;
-
+	private long currentIteration;
 	private long ticksRemaining;
 
 	private boolean expired;
 
-	Task(Consumer<Task> consumer, long delay, long interval, long iterations) {
-		this.consumer = consumer;
-		this.interval = interval;
-		this.iterations = iterations;
+	Task(TaskBuilder builder) {
+		this.consumer = PreconditionUtils.checkNotNull(builder.consumer);
+		this.interval = builder.interval;
+		this.iterations = builder.iterations;
 		this.timestamp = System.currentTimeMillis();
-		if (delay > 0L) {
-			this.ticksRemaining = delay;
-		}
+		this.ticksRemaining = builder.delay > 0L ? builder.delay : 0L;
+	}
+
+	public static TaskBuilder builder() {
+		return new TaskBuilder();
 	}
 
 	public long getTimestamp() {
@@ -64,10 +63,6 @@ public final class Task {
 		}
 	}
 
-	public static TaskBuilder builder() {
-		return new TaskBuilder();
-	}
-
 	private static final class TaskListener {
 
 		TaskListener() {
@@ -91,11 +86,11 @@ public final class Task {
 	}
 
 	public static final class TaskBuilder {
-		private Consumer<Task> consumer;
+		private @Nullable Consumer<Task> consumer;
 
-		private long delay;
+		private long delay = 0L;
 
-		private long interval;
+		private long interval = 0L;
 
 		private long iterations = 1L;
 
@@ -136,7 +131,7 @@ public final class Task {
 			PreconditionUtils.checkState(iterations >= -1L, "Iterations must not be below -1");
 			PreconditionUtils.checkState(interval >= 0L, "Interval must not be below 0");
 			PreconditionUtils.checkState(delay >= 0L, "Delay must not be below 0");
-			return new Task(this.consumer, this.delay, this.interval, this.iterations);
+			return new Task(this);
 		}
 	}
 }
