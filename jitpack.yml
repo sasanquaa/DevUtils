@@ -1,2 +1,0 @@
-install:
-  - ./gradlew clean -PskipCheckerFramework -Pgroup=com.github.sasanquaa -Pversion=1.12 -xtest assemble publishToMavenLocal
