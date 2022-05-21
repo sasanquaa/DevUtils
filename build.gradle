@@ -25,6 +25,12 @@ subprojects {
     apply plugin: "maven-publish"
     apply plugin: 'org.checkerframework'
 
+    java {
+        toolchain {
+            languageVersion.set(JavaLanguageVersion.of(8))
+        }
+    }
+
     jar {
         from project(":Common").sourceSets.getByName("main").output
     }
@@ -32,6 +38,10 @@ subprojects {
     java {
         withSourcesJar()
         withJavadocJar()
+    }
+
+    compileJava {
+        options.encoding = 'UTF-8'
     }
 
     dependencies {
