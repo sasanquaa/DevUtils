@@ -19,7 +19,7 @@ public final class ArgumentContextParser {
 		this.keySet = Collections.unmodifiableSet(builder.keySet);
 		this.nonFlagKeys = this.keySet.stream().filter(k -> {
 			stringBuilder.append(k.isFlag() ? optionalUsage(k) : requiredUsage(k)).append(" ");
-			return k.isFlag();
+			return !k.isFlag();
 		}).count();
 		this.usage = stringBuilder.toString();
 	}
@@ -37,8 +37,8 @@ public final class ArgumentContextParser {
 					if (!reader.canAdvance()) {
 						throw new CommandException("Flag " + reader.peek() + " provided but cannot continue!");
 					}
-					String flag = reader.advance();
-					if (flag.startsWith(FLAG_PREFIX + key.getId())) {
+					if (reader.peek().startsWith(FLAG_PREFIX + key.getId())) {
+						reader.advance();
 						tryParse(key.getParser(), reader).ifPresent(value -> values.put(key, value));
 					}
 				}

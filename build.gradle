@@ -43,6 +43,14 @@ subprojects {
     dependencies {
         compileOnly 'org.checkerframework:checker-qual:3.21.4'
         checkerFramework 'org.checkerframework:checker:3.21.4'
+
+        testImplementation 'junit:junit:4.13'
+    }
+
+    test {
+        useJUnit()
+
+        maxHeapSize = '1G'
     }
 
     checkerFramework {
