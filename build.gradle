@@ -2,12 +2,6 @@ plugins {
     id 'org.checkerframework' version '0.6.10' apply false
 }
 
-configurations {
-    bundleJar {
-        transitive = false
-    }
-}
-
 allprojects {
 
     group "me.sasanqua.utils"
@@ -70,21 +64,15 @@ subprojects {
 
 }
 
-dependencies {
-    subprojects.each {
-        bundleJar it
-    }
-}
+tasks.register("build") { task ->
 
-tasks.register("buildAll") { task ->
-
-    task.dependsOn configurations.named("bundleJar")
+    task.dependsOn subprojects*.build
 
     task.doFirst {
         copy {
-            from subprojects.collect { file("./${it.name}/build/libs/${it.name}.jar") }
+            from subprojects.collect { file("./${it.name}/build/libs/${it.name}-${project.version}.jar") }
             eachFile {
-                it.setName("${it.name.replace(".jar", "")}Utils.jar")
+                it.setName("${it.name.replace(".jar", "")}.jar")
             }
             into file("./build/libs/")
         }
