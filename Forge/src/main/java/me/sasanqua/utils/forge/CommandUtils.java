@@ -1,5 +1,8 @@
 package me.sasanqua.utils.forge;
 
+import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.math.Vec3d;
+import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.WorldServer;
 import net.minecraftforge.common.DimensionManager;
 
@@ -8,6 +11,9 @@ import java.util.stream.Stream;
 public final class CommandUtils {
 
 	public static final ArgumentParser<Integer> INTEGER_ARGUMENT_PARSER = (reader) -> Integer.parseInt(
+			reader.advance());
+
+	public static final ArgumentParser<Double> DOUBLE_ARGUMENT_PARSER = (reader) -> Double.parseDouble(
 			reader.advance());
 	public static final ArgumentParser<String> STRING_ARGUMENT_PARSER = (reader) -> {
 		StringBuilder value = new StringBuilder(reader.advance());
@@ -38,8 +44,29 @@ public final class CommandUtils {
 				.orElseThrow(() -> new RuntimeException("World with name " + world + " not found!"));
 	};
 
+	public static final ArgumentParser<Vec3i> VEC3I_ARGUMENT_PARSER = (reader) -> {
+		int x = INTEGER_ARGUMENT_PARSER.parse(reader);
+		int y = INTEGER_ARGUMENT_PARSER.parse(reader);
+		int z = INTEGER_ARGUMENT_PARSER.parse(reader);
+		return new Vec3i(x, y, z);
+	};
+
+	public static final ArgumentParser<Vec3d> VEC3D_ARGUMENT_PARSER = (reader) -> {
+		double x = DOUBLE_ARGUMENT_PARSER.parse(reader);
+		double y = DOUBLE_ARGUMENT_PARSER.parse(reader);
+		double z = DOUBLE_ARGUMENT_PARSER.parse(reader);
+		return new Vec3d(x, y, z);
+	};
+
+	public static final ArgumentParser<BlockPos> BLOCK_POS_ARGUMENT_PARSER = (reader) -> new BlockPos(
+			VEC3I_ARGUMENT_PARSER.parse(reader));
+
 	public static ArgumentKey.Builder<Integer> integerKeyBuilder(String id) {
 		return CommandUtils.<Integer>argumentKeyBuilder().id(id).parser(INTEGER_ARGUMENT_PARSER);
+	}
+
+	public static ArgumentKey.Builder<Double> doubleKeyBuilder(String id) {
+		return CommandUtils.<Double>argumentKeyBuilder().id(id).parser(DOUBLE_ARGUMENT_PARSER);
 	}
 
 	public static ArgumentKey.Builder<String> stringKeyBuilder(String id) {
@@ -48,6 +75,18 @@ public final class CommandUtils {
 
 	public static ArgumentKey.Builder<WorldServer> worldKeyBuilder(String id) {
 		return CommandUtils.<WorldServer>argumentKeyBuilder().id(id).parser(WORLD_SERVER_ARGUMENT_PARSER);
+	}
+
+	public static ArgumentKey.Builder<Vec3i> vec3iKeyBuilder(String id) {
+		return CommandUtils.<Vec3i>argumentKeyBuilder().id(id).parser(VEC3I_ARGUMENT_PARSER);
+	}
+
+	public static ArgumentKey.Builder<Vec3d> vec3dKeyBuilder(String id) {
+		return CommandUtils.<Vec3d>argumentKeyBuilder().id(id).parser(VEC3D_ARGUMENT_PARSER);
+	}
+
+	public static ArgumentKey.Builder<BlockPos> blockPosKeyBuilder(String id) {
+		return CommandUtils.<BlockPos>argumentKeyBuilder().id(id).parser(BLOCK_POS_ARGUMENT_PARSER);
 	}
 
 	public static <T> ArgumentKey.Builder<T> argumentKeyBuilder() {
