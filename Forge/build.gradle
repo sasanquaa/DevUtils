@@ -1,3 +1,5 @@
+import java.util.stream.Collectors
+
 buildscript {
     repositories {
         maven { url 'https://files.minecraftforge.net/maven' }
@@ -9,12 +11,24 @@ buildscript {
 
 apply plugin: 'net.minecraftforge.gradle'
 
+ext {
+    mappingsChannel = 'stable'
+    mappingsVersion = '39-1.12'
+}
+
+//configurations.getByName("minecraft") { minecraft ->
+//    configurations.getByName("implementation") { implementation ->
+//        implementation.extendsFrom = implementation.extendsFrom.stream().filter(c -> c != minecraft).collect(Collectors.toSet())
+//    }
+//}
+
+
 minecraft {
-    mappings channel: 'stable', version: '39-1.12'
+    mappings channel: mappingsChannel, version: mappingsVersion
 }
 
 dependencies {
     minecraft "net.minecraftforge:forge:$forgeVersion"
 
-    implementation project(":Common")
+    api project(":Common")
 }

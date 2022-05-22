@@ -1,7 +1,7 @@
 package me.sasanqua.utils.forge;
 
-import org.junit.Assert;
-import org.junit.Test;
+import org.junit.jupiter.api.Assertions;
+import org.junit.jupiter.api.Test;
 
 public class TextTest {
 
@@ -18,7 +18,7 @@ public class TextTest {
 				.parse()
 				.getUnformattedText();
 
-		Assert.assertEquals(value.replace("{name}", "SASANQUA").replace("{name2}", "SASANQUA"), parsed);
+		Assertions.assertEquals(value.replace("{name}", "SASANQUA").replace("{name2}", "SASANQUA"), parsed);
 	}
 
 }
