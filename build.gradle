@@ -10,6 +10,8 @@ allprojects {
     ext {
         spongeVersion = '7.4.0'
         forgeVersion = '1.12.2-14.23.5.2860'
+        junitVersion = '5.7.1'
+        checkerVersion = '3.21.4'
     }
 
     repositories {
@@ -21,7 +23,7 @@ allprojects {
 
 
 subprojects {
-    apply plugin: "java"
+    apply plugin: "java-library"
     apply plugin: "maven-publish"
     apply plugin: 'org.checkerframework'
 
@@ -45,20 +47,20 @@ subprojects {
     }
 
     dependencies {
-        compileOnly 'org.checkerframework:checker-qual:3.21.4'
-        checkerFramework 'org.checkerframework:checker:3.21.4'
+        compileOnly "org.checkerframework:checker-qual:$checkerVersion"
+        checkerFramework "org.checkerframework:checker:$checkerVersion"
 
-        testImplementation 'junit:junit:4.13'
+        testImplementation "org.junit.jupiter:junit-jupiter:$junitVersion"
     }
 
     test {
-        useJUnit()
-
+        useJUnitPlatform()
         maxHeapSize = '1G'
     }
 
     checkerFramework {
         checkers = ['org.checkerframework.checker.nullness.NullnessChecker']
+        skipCheckerFramework = System.getenv("SKIP_CHECKER_FRAMEWORK") == null ? false : true
     }
 
     publishing {

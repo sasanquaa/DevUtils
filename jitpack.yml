@@ -1,0 +1,2 @@
+env:
+  SKIP_CHECKER_FRAMEWORK: true
