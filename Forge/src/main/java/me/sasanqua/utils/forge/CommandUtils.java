@@ -1,13 +1,21 @@
 package me.sasanqua.utils.forge;
 
+import me.sasanqua.utils.common.PreconditionUtils;
 import me.sasanqua.utils.forge.def.*;
+import net.minecraft.command.CommandBase;
+import net.minecraft.command.CommandException;
+import net.minecraft.command.ICommand;
+import net.minecraft.command.ICommandSender;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.server.command.CommandTreeBase;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
-import java.util.UUID;
+import java.util.*;
 
 public final class CommandUtils {
 
@@ -22,56 +30,197 @@ public final class CommandUtils {
 	public static final ArgumentParser<Vec3d> VEC3D_ARGUMENT_PARSER = new Vec3dArgumentParser();
 	public static final ArgumentParser<BlockPos> BLOCK_POS_ARGUMENT_PARSER = new BlockPosArgumentParser();
 
-	public static ArgumentKey.Builder<EntityPlayerMP> playerKeyBuilder(String id) {
+	public static Argument.Builder<EntityPlayerMP> playerKeyBuilder(String id) {
 		return CommandUtils.<EntityPlayerMP>argumentKeyBuilder().id(id).parser(PLAYER_ARGUMENT_PARSER);
 	}
 
-	public static ArgumentKey.Builder<Boolean> booleanKeyBuilder(String id) {
+	public static Argument.Builder<Boolean> booleanKeyBuilder(String id) {
 		return CommandUtils.<Boolean>argumentKeyBuilder().id(id).parser(BOOLEAN_ARGUMENT_PARSER);
 	}
 
-	public static <T extends Enum> ArgumentKey.Builder<T> enumKeyBuilder(String id, Class<T> enumClass) {
+	public static <T extends Enum> Argument.Builder<T> enumKeyBuilder(String id, Class<T> enumClass) {
 		return CommandUtils.<T>argumentKeyBuilder().id(id).parser(new EnumArgumentParser<>(enumClass));
 	}
 
-	public static ArgumentKey.Builder<Integer> integerKeyBuilder(String id) {
+	public static Argument.Builder<String> choicesKeyBuilder(String id, String... choices) {
+		PreconditionUtils.checkArgument(choices.length > 0, "Choices must not be empty");
+		return CommandUtils.<String>argumentKeyBuilder()
+				.id(id)
+				.parser(new ChoicesArgumentParser(Arrays.asList(choices)));
+	}
+
+	public static Argument.Builder<Integer> integerKeyBuilder(String id) {
 		return CommandUtils.<Integer>argumentKeyBuilder().id(id).parser(INTEGER_ARGUMENT_PARSER);
 	}
 
-	public static ArgumentKey.Builder<Double> doubleKeyBuilder(String id) {
+	public static Argument.Builder<Double> doubleKeyBuilder(String id) {
 		return CommandUtils.<Double>argumentKeyBuilder().id(id).parser(DOUBLE_ARGUMENT_PARSER);
 	}
 
-	public static ArgumentKey.Builder<String> stringKeyBuilder(String id) {
+	public static Argument.Builder<String> stringKeyBuilder(String id) {
 		return CommandUtils.<String>argumentKeyBuilder().id(id).parser(STRING_ARGUMENT_PARSER);
 	}
 
-	public static ArgumentKey.Builder<UUID> uuidKeyBuilder(String id) {
+	public static Argument.Builder<UUID> uuidKeyBuilder(String id) {
 		return CommandUtils.<UUID>argumentKeyBuilder().id(id).parser(UUID_ARGUMENT_PARSER);
 	}
 
-	public static ArgumentKey.Builder<WorldServer> worldKeyBuilder(String id) {
+	public static Argument.Builder<WorldServer> worldKeyBuilder(String id) {
 		return CommandUtils.<WorldServer>argumentKeyBuilder().id(id).parser(WORLD_SERVER_ARGUMENT_PARSER);
 	}
 
-	public static ArgumentKey.Builder<Vec3i> vec3iKeyBuilder(String id) {
+	public static Argument.Builder<Vec3i> vec3iKeyBuilder(String id) {
 		return CommandUtils.<Vec3i>argumentKeyBuilder().id(id).parser(VEC3I_ARGUMENT_PARSER);
 	}
 
-	public static ArgumentKey.Builder<Vec3d> vec3dKeyBuilder(String id) {
+	public static Argument.Builder<Vec3d> vec3dKeyBuilder(String id) {
 		return CommandUtils.<Vec3d>argumentKeyBuilder().id(id).parser(VEC3D_ARGUMENT_PARSER);
 	}
 
-	public static ArgumentKey.Builder<BlockPos> blockPosKeyBuilder(String id) {
+	public static Argument.Builder<BlockPos> blockPosKeyBuilder(String id) {
 		return CommandUtils.<BlockPos>argumentKeyBuilder().id(id).parser(BLOCK_POS_ARGUMENT_PARSER);
 	}
 
-	public static <T> ArgumentKey.Builder<T> argumentKeyBuilder() {
-		return new ArgumentKey.Builder<>();
+	public static <T> Argument.Builder<T> argumentKeyBuilder() {
+		return new Argument.Builder<>();
 	}
 
-	public static ArgumentContextParser.Builder contextParserBuilder() {
-		return new ArgumentContextParser.Builder();
+	public static CommandSpec.Builder commandSpecBuilder() {
+		return new CommandSpec.Builder();
+	}
+
+	public static CommandBase asCommand(CommandSpec spec, String... keys) {
+		PreconditionUtils.checkArgument(keys.length > 0, "Keys must not be empty");
+		if (spec.getChildren().isEmpty()) {
+			return new CommandBaseWrapper(spec, keys);
+		}
+		CommandTreeBaseWrapper command = new CommandTreeBaseWrapper(spec, keys);
+		spec.getChildren().asMap().forEach((k, v) -> command.addSubcommand(asCommand(k, v.toArray(new String[0]))));
+		return command;
+	}
+
+	private static class CommandBaseWrapper extends CommandBase {
+
+		final CommandSpec spec;
+		final List<String> keys;
+
+		CommandBaseWrapper(CommandSpec spec, String[] keys) {
+			this.spec = spec;
+			this.keys = Collections.unmodifiableList(Arrays.asList(keys));
+		}
+
+		@Override
+		public String getName() {
+			return keys.get(0);
+		}
+
+		@Override
+		public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
+			return getListOfStringsMatchingLastWord(args, spec.getParser().getTabCompletions(args));
+		}
+
+		@Override
+		public String getUsage(ICommandSender sender) {
+			String usage = spec.getParser().getUsage();
+			return spec.getUsage().orElse(usage.isEmpty() ? "" : getName() + " arguments: " + usage);
+		}
+
+		@Override
+		public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+			CommandContext context = spec.getParser().parse(args);
+			context.setSender(sender);
+			context.setServer(server);
+			spec.getExecutor().execute(context);
+		}
+
+		@Override
+		public List<String> getAliases() {
+			return keys;
+		}
+
+		@Override
+		public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+			return sender.canUseCommand(this.getRequiredPermissionLevel(), spec.getPermission());
+		}
+
+	}
+
+	private static class CommandTreeBaseWrapper extends CommandTreeBase {
+
+		final CommandSpec spec;
+		final List<String> keys;
+
+		CommandTreeBaseWrapper(CommandSpec spec, String[] keys) {
+			this.spec = spec;
+			this.keys = Collections.unmodifiableList(Arrays.asList(keys));
+		}
+
+		@Override
+		public String getName() {
+			return keys.get(0);
+		}
+
+		@Override
+		public String getUsage(ICommandSender sender) {
+			String usage = spec.getParser().getUsage();
+			return spec.getUsage().orElse(usage.isEmpty() ? "" : getName() + " arguments: " + usage);
+		}
+
+		@Override
+		public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos) {
+			return getListOfStringsMatchingLastWord(args, spec.getParser().getTabCompletions(args));
+		}
+
+		@Override
+		public List<String> getAliases() {
+			return keys;
+		}
+
+		@Override
+		public void execute(MinecraftServer server, ICommandSender sender, String[] args) throws CommandException {
+			if (args.length < 1) {
+				CommandContext context = spec.getParser().parse(args);
+				context.setSender(sender);
+				context.setServer(server);
+				spec.getExecutor().execute(context);
+			} else {
+				ICommand cmd = getSubCommand(args[0]);
+				if (cmd == null) {
+					String subCommandsString = getAvailableSubCommandsString(server, sender);
+					throw new CommandException("commands.tree_base.invalid_cmd.list_subcommands", args[0],
+							subCommandsString);
+				} else if (!cmd.checkPermission(server, sender)) {
+					throw new CommandException("commands.generic.permission");
+				} else {
+					cmd.execute(server, sender, shiftArgs(args));
+				}
+			}
+		}
+
+		@Override
+		public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+			return sender.canUseCommand(getRequiredPermissionLevel(), spec.getPermission());
+		}
+
+		String getAvailableSubCommandsString(MinecraftServer server, ICommandSender sender) {
+			Collection<String> availableCommands = new ArrayList<>();
+			for (ICommand command : getSubCommands()) {
+				if (command.checkPermission(server, sender)) {
+					availableCommands.add(command.getName());
+				}
+			}
+			return CommandBase.joinNiceStringFromCollection(availableCommands);
+		}
+
+		static String[] shiftArgs(@Nullable String[] s) {
+			if (s == null || s.length == 0) {
+				return new String[0];
+			}
+			String[] s1 = new String[s.length - 1];
+			System.arraycopy(s, 1, s1, 0, s1.length);
+			return s1;
+		}
+
 	}
 
 }

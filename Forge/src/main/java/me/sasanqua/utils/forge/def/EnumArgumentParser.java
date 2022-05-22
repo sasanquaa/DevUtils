@@ -14,6 +14,10 @@ public class EnumArgumentParser<T extends Enum<T>> implements ArgumentParser<T> 
 		this.enumClass = enumClass;
 	}
 
+	public Class<T> getEnumClass() {
+		return enumClass;
+	}
+
 	@Override
 	public T parse(ArgumentReader reader) throws Exception {
 		String value = reader.advance();

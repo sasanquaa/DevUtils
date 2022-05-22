@@ -1,5 +1,6 @@
 package me.sasanqua.utils.forge.def;
 
+import me.sasanqua.utils.common.PreconditionUtils;
 import me.sasanqua.utils.forge.ArgumentParser;
 import me.sasanqua.utils.forge.ArgumentReader;
 
@@ -20,9 +21,7 @@ public class StringArgumentParser implements ArgumentParser<String> {
 				break;
 			}
 		}
-		if (!(value.charAt(value.length() - 1) == quote)) {
-			throw new RuntimeException("Invalid string argument provided!");
-		}
+		PreconditionUtils.checkState(value.charAt(value.length() - 1) == quote);
 		String result = value.toString().replace(escape, String.valueOf(quote));
 		return result.substring(1, result.length() - 1);
 	}

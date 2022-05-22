@@ -2,20 +2,24 @@ package me.sasanqua.utils.forge;
 
 import me.sasanqua.utils.common.Identifiable;
 import me.sasanqua.utils.common.PreconditionUtils;
+import me.sasanqua.utils.forge.def.ArgumentParsingException;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
+import java.util.List;
 import java.util.Objects;
 
-public final class ArgumentKey<T> implements Identifiable<String> {
+public final class Argument<T> implements Identifiable<String> {
 
 	private final String id;
 	private final ArgumentParser<T> parser;
 	private final boolean flag;
+	private final String parsingErrorMessage;
 
-	private ArgumentKey(Builder<T> builder) {
+	private Argument(Builder<T> builder) {
 		this.id = PreconditionUtils.checkNotNull(builder.id, "Key id must not be null");
 		this.parser = PreconditionUtils.checkNotNull(builder.parser, "Parser must not be null");
 		this.flag = builder.flag;
+		this.parsingErrorMessage = builder.parsingErrorMessage == null ? "Invalid argument provided" : builder.parsingErrorMessage;
 	}
 
 	@Override
@@ -23,17 +27,25 @@ public final class ArgumentKey<T> implements Identifiable<String> {
 		return id;
 	}
 
-	ArgumentParser<T> getParser() {
-		return parser;
+	Object parseOrThrow(ArgumentReader reader) throws ArgumentParsingException {
+		try {
+			return PreconditionUtils.checkNotNull(parser.parse(reader));
+		} catch (Exception e) {
+			throw new ArgumentParsingException(parsingErrorMessage, e);
+		}
 	}
 
 	boolean isFlag() {
 		return flag;
 	}
 
+	List<String> getTabCompletionsIfAny() {
+		return TabCompleter.getTabCompletions(parser);
+	}
+
 	@Override
 	public boolean equals(@Nullable Object o) {
-		return o instanceof ArgumentKey && Objects.equals(id, ((ArgumentKey<?>) o).id);
+		return o instanceof Argument && Objects.equals(id, ((Argument<?>) o).id);
 	}
 
 	@Override
@@ -41,10 +53,12 @@ public final class ArgumentKey<T> implements Identifiable<String> {
 		return id.hashCode();
 	}
 
-	public static final class Builder<T> {
+	public static final class Builder<T> implements me.sasanqua.utils.common.Builder<Argument<T>> {
 
 		private @Nullable String id;
 		private @Nullable ArgumentParser<T> parser;
+
+		private @Nullable String parsingErrorMessage;
 		private boolean flag = false;
 
 		Builder() {
@@ -60,13 +74,19 @@ public final class ArgumentKey<T> implements Identifiable<String> {
 			return this;
 		}
 
+		public Builder<T> parsingErrorMessage(String message) {
+			this.parsingErrorMessage = message;
+			return this;
+		}
+
 		public Builder<T> flag() {
 			this.flag = true;
 			return this;
 		}
 
-		public ArgumentKey<T> build() {
-			return new ArgumentKey<>(this);
+		@Override
+		public Argument<T> build() {
+			return new Argument<>(this);
 		}
 
 	}

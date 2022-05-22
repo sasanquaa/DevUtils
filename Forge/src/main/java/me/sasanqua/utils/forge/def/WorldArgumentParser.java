@@ -15,7 +15,7 @@ public class WorldArgumentParser implements ArgumentParser<WorldServer> {
 		return Stream.of(DimensionManager.getWorlds())
 				.filter(w -> w.getWorldInfo().getWorldName().equalsIgnoreCase(world))
 				.findFirst()
-				.orElseThrow(() -> new RuntimeException("World with name " + world + " not found!"));
+				.get();
 	}
 
 }
