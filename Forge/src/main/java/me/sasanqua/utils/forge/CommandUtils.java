@@ -10,6 +10,8 @@ import java.util.stream.Stream;
 
 public final class CommandUtils {
 
+	public static final ArgumentParser<Boolean> BOOLEAN_ARGUMENT_PARSER = (reader) -> Boolean.parseBoolean(
+			(reader.advance()));
 	public static final ArgumentParser<Integer> INTEGER_ARGUMENT_PARSER = (reader) -> Integer.parseInt(
 			reader.advance());
 
@@ -60,6 +62,10 @@ public final class CommandUtils {
 
 	public static final ArgumentParser<BlockPos> BLOCK_POS_ARGUMENT_PARSER = (reader) -> new BlockPos(
 			VEC3I_ARGUMENT_PARSER.parse(reader));
+
+	public static ArgumentKey.Builder<Boolean> booleanKeyBuilder(String id) {
+		return CommandUtils.<Boolean>argumentKeyBuilder().id(id).parser(BOOLEAN_ARGUMENT_PARSER);
+	}
 
 	public static ArgumentKey.Builder<Integer> integerKeyBuilder(String id) {
 		return CommandUtils.<Integer>argumentKeyBuilder().id(id).parser(INTEGER_ARGUMENT_PARSER);
