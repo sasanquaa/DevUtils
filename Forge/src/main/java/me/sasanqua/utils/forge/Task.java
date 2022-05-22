@@ -42,6 +42,10 @@ public final class Task {
 		return timestamp;
 	}
 
+	public long getCurrentIteration() {
+		return currentIteration;
+	}
+
 	public boolean isExpired() {
 		return this.expired;
 	}
