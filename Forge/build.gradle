@@ -16,11 +16,14 @@ ext {
     mappingsVersion = '39-1.12'
 }
 
-//configurations.getByName("minecraft") { minecraft ->
-//    configurations.getByName("implementation") { implementation ->
-//        implementation.extendsFrom = implementation.extendsFrom.stream().filter(c -> c != minecraft).collect(Collectors.toSet())
-//    }
-//}
+configurations.getByName("minecraft") { minecraft ->
+    configurations.getByName("implementation") { implementation ->
+        implementation.extendsFrom = implementation.extendsFrom.findAll { c -> c != minecraft }
+    }
+    configurations.getByName("compileOnly") { compileOnly ->
+        compileOnly.extendsFrom minecraft
+    }
+}
 
 
 minecraft {
