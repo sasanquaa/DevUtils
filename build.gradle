@@ -27,6 +27,10 @@ subprojects {
     apply plugin: "maven-publish"
     apply plugin: 'org.checkerframework'
 
+    configurations.getByName("testImplementation") {
+        it.extendsFrom configurations.getByName("compileOnly")
+    }
+
     java {
         toolchain {
             languageVersion.set(JavaLanguageVersion.of(8))
@@ -35,6 +39,7 @@ subprojects {
 
     jar {
         from project(":Common").sourceSets.getByName("main").output
+        exclude "generated/"
     }
 
     java {
