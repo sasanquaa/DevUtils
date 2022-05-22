@@ -1,4 +1,4 @@
-package me.sasanqua.utils.forge.exception;
+package me.sasanqua.utils.forge.def;
 
 import net.minecraft.command.CommandException;
 

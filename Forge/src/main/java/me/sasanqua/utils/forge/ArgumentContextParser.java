@@ -1,8 +1,9 @@
 package me.sasanqua.utils.forge;
 
 import me.sasanqua.utils.common.PreconditionUtils;
-import me.sasanqua.utils.forge.exception.ArgumentParsingException;
+import me.sasanqua.utils.forge.def.ArgumentParsingException;
 import org.checkerframework.checker.initialization.qual.UnknownInitialization;
+import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.*;
 
@@ -11,16 +12,12 @@ public final class ArgumentContextParser {
 	private static final String FLAG_PREFIX = "-";
 
 	private final Set<ArgumentKey<?>> keySet;
-	private final long nonFlagKeys;
 	private final String usage;
 
 	private ArgumentContextParser(Builder builder) {
 		StringBuilder stringBuilder = new StringBuilder();
 		this.keySet = Collections.unmodifiableSet(builder.keySet);
-		this.nonFlagKeys = this.keySet.stream().filter(k -> {
-			stringBuilder.append(k.isFlag() ? optionalUsage(k) : requiredUsage(k)).append(" ");
-			return !k.isFlag();
-		}).count();
+		this.keySet.forEach(k -> stringBuilder.append(k.isFlag() ? optionalUsage(k) : requiredUsage(k)).append(" "));
 		this.usage = stringBuilder.toString();
 	}
 
@@ -29,6 +26,10 @@ public final class ArgumentContextParser {
 	}
 
 	public ArgumentContext parse(String[] arguments) throws ArgumentParsingException {
+		return parse(arguments, null);
+	}
+
+	public ArgumentContext parse(String[] arguments, @Nullable String errorMessage) throws ArgumentParsingException {
 		ArgumentReader reader = new ArgumentReader(arguments);
 		Map<ArgumentKey<?>, Object> values = new HashMap<>();
 		for (ArgumentKey<?> key : keySet) {
@@ -39,21 +40,22 @@ public final class ArgumentContextParser {
 					}
 					if (reader.peek().startsWith(FLAG_PREFIX + key.getId())) {
 						reader.advance();
-						values.put(key, parseOrThrow(key.getParser(), reader));
+						values.put(key, parseOrThrow(key.getParser(), reader, errorMessage));
 					}
 				}
 				continue;
 			}
-			values.put(key, parseOrThrow(key.getParser(), reader));
+			values.put(key, parseOrThrow(key.getParser(), reader, errorMessage));
 		}
 		return new ArgumentContext(values);
 	}
 
-	private Object parseOrThrow(ArgumentParser<?> parser, ArgumentReader reader) throws ArgumentParsingException {
+	private Object parseOrThrow(ArgumentParser<?> parser, ArgumentReader reader, @Nullable String errorMessage)
+			throws ArgumentParsingException {
 		try {
 			return PreconditionUtils.checkNotNull(parser.parse(reader));
 		} catch (Exception e) {
-			throw new ArgumentParsingException(String.valueOf(e.getMessage()), e);
+			throw new ArgumentParsingException(errorMessage == null ? String.valueOf(e.getMessage()) : errorMessage, e);
 		}
 	}
 
