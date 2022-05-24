@@ -1,7 +1,10 @@
 package me.sasanqua.utils.forge;
 
+import com.google.common.collect.HashMultimap;
 import com.google.common.collect.Lists;
+import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
+import me.sasanqua.utils.common.ReflectionUtils;
 import net.minecraft.command.CommandException;
 import net.minecraft.command.ICommand;
 import net.minecraftforge.server.command.CommandTreeBase;
@@ -149,6 +152,27 @@ public class CommandTest {
 				}
 			}
 		}
+	}
+
+	@Test
+	public void testCommandCycle() throws Exception {
+		//Probably the only way for cyclic dependency is through modifying via reflections
+		//Otherwise, it should not be possible
+		CommandSpec cmd2 = CommandUtils.commandSpecBuilder().permission("cmd2").executor(context -> {
+		}).build();
+		CommandSpec cmd1 = CommandUtils.commandSpecBuilder()
+				.permission("cmd1")
+				.addChild(cmd2, "cmd2")
+				.executor(context -> {
+				})
+				.build();
+		Multimap<CommandSpec, String> children = HashMultimap.create(
+				ReflectionUtils.<Multimap<CommandSpec, String>>getField(cmd2, "children").get());
+		children.put(cmd1, "test");
+		ReflectionUtils.setField(cmd2, "children", children);
+		assertThrows(Exception.class, () -> {
+			CommandTreeBase base = (CommandTreeBase) CommandUtils.asCommand(cmd1, "f1");
+		});
 	}
 
 	enum TestEnum {

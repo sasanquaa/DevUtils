@@ -5,6 +5,7 @@ import org.checkerframework.checker.nullness.qual.NonNull;
 import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
+import java.lang.reflect.Modifier;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
@@ -35,15 +36,19 @@ public final class ReflectionUtils {
 	}
 
 	public static <T> Optional<T> getField(Object obj, String fieldName) {
-		int hash = Objects.hash(obj.getClass(), fieldName);
-		Field field = fieldCache.get(hash);
 		try {
-			if (field == null) {
-				field = obj.getClass().getDeclaredField(fieldName);
-				field.setAccessible(true);
-				fieldCache.putIfAbsent(hash, field);
-			}
-			return Optional.ofNullable((T) field.get(obj));
+			return Optional.ofNullable((T) getFieldOrCreate(obj, fieldName).get(obj));
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return Optional.empty();
+	}
+
+	public static <T> Optional<T> setField(Object obj, String fieldName, Object value) {
+		try {
+			Optional<T> previousValue = getField(obj, fieldName);
+			getFieldOrCreate(obj, fieldName).set(obj, value);
+			return previousValue;
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
@@ -65,6 +70,26 @@ public final class ReflectionUtils {
 			e.printStackTrace();
 		}
 		return Optional.empty();
+	}
+
+	private static Field getFieldOrCreate(Object obj, String fieldName)
+			throws NoSuchFieldException, IllegalAccessException {
+		int hash = Objects.hash(obj.getClass(), fieldName);
+		int modifiersHash = Objects.hash(Field.class, "modifiers");
+		Field field = fieldCache.get(hash);
+		if (field == null) {
+			field = obj.getClass().getDeclaredField(fieldName);
+			field.setAccessible(true);
+			Field modifiersField = fieldCache.get(modifiersHash);
+			if (modifiersField == null) {
+				modifiersField = Field.class.getDeclaredField("modifiers");
+				modifiersField.setAccessible(true);
+				fieldCache.putIfAbsent(modifiersHash, modifiersField);
+			}
+			modifiersField.setInt(field, field.getModifiers() & ~Modifier.FINAL);
+			fieldCache.putIfAbsent(hash, field);
+		}
+		return field;
 	}
 
 }

@@ -12,10 +12,12 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.WorldServer;
+import net.minecraftforge.fml.common.toposort.TopologicalSort;
 import net.minecraftforge.server.command.CommandTreeBase;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.*;
+import java.util.function.Supplier;
 
 public final class CommandUtils {
 
@@ -43,10 +45,12 @@ public final class CommandUtils {
 	}
 
 	public static Argument.Builder<String> choicesKeyBuilder(String id, String... choices) {
-		PreconditionUtils.checkArgument(choices.length > 0, "Choices must not be empty");
-		return CommandUtils.<String>argumentKeyBuilder()
-				.id(id)
-				.parser(new ChoicesArgumentParser(Arrays.asList(choices)));
+		List<String> choicesList = Arrays.asList(choices);
+		return choicesKeyBuilder(id, () -> choicesList);
+	}
+
+	public static Argument.Builder<String> choicesKeyBuilder(String id, Supplier<List<String>> choicesSupplier) {
+		return CommandUtils.<String>argumentKeyBuilder().id(id).parser(new ChoicesArgumentParser(choicesSupplier));
 	}
 
 	public static Argument.Builder<Integer> integerKeyBuilder(String id) {
@@ -91,12 +95,71 @@ public final class CommandUtils {
 
 	public static CommandBase asCommand(CommandSpec spec, String... keys) {
 		PreconditionUtils.checkArgument(keys.length > 0, "Keys must not be empty");
+		Set<CommandSpec> topVisitedSet = new HashSet<>();
+		Stack<CommandSpec> topStack = new Stack<>();
+		topStack.push(spec);
+
+		while (!topStack.isEmpty()) {
+			CommandSpec topCurrentSpec = topStack.pop();
+			if (topVisitedSet.contains(topCurrentSpec)) {
+				continue;
+			}
+			topVisitedSet.add(topCurrentSpec);
+			topCurrentSpec.getChildren().keySet().forEach(topStack::add);
+
+			Set<CommandSpec> visitedSet = new HashSet<>();
+			Set<CommandSpec> stackSet = new HashSet<>();
+			Stack<CommandSpec> stack = new Stack<>();
+			stack.push(topCurrentSpec);
+
+			while (!stack.isEmpty()) {
+				CommandSpec currentSpec = stack.peek();
+				if (!visitedSet.contains(currentSpec)) {
+					visitedSet.add(currentSpec);
+					stackSet.add(currentSpec);
+				} else {
+					stackSet.remove(currentSpec);
+					stack.pop();
+				}
+				for (CommandSpec childSpec : currentSpec.getChildren().keySet()) {
+					if (!visitedSet.contains(childSpec)) {
+						stack.push(childSpec);
+					} else {
+						PreconditionUtils.checkArgument(!stackSet.contains(childSpec),
+								"Cannot build commands with cyclic dependency");
+					}
+				}
+			}
+		}
+
+		return asCommandImpl(spec, keys);
+	}
+
+	private static CommandBase asCommandImpl(CommandSpec spec, String... keys) {
 		if (spec.getChildren().isEmpty()) {
 			return new CommandBaseWrapper(spec, keys);
 		}
 		CommandTreeBaseWrapper command = new CommandTreeBaseWrapper(spec, keys);
-		spec.getChildren().asMap().forEach((k, v) -> command.addSubcommand(asCommand(k, v.toArray(new String[0]))));
+		spec.getChildren().asMap().forEach((k, v) -> command.addSubcommand(asCommandImpl(k, v.toArray(new String[0]))));
 		return command;
+	}
+
+	private static boolean hasCycle(TopologicalSort.DirectedGraph<CommandSpec> graph, CommandSpec spec, Set<CommandSpec> visitedSet, Set<CommandSpec> recursionSet) {
+		if (recursionSet.contains(spec)) {
+			return true;
+		}
+		if (visitedSet.contains(spec)) {
+			return false;
+		}
+		visitedSet.add(spec);
+		recursionSet.add(spec);
+		for (CommandSpec commandSpec : graph.edgesFrom(spec)) {
+			if (hasCycle(graph, commandSpec, visitedSet, recursionSet)) {
+				return true;
+			}
+		}
+		recursionSet.remove(spec);
+		return false;
 	}
 
 	private static class CommandBaseWrapper extends CommandBase {
@@ -202,7 +265,7 @@ public final class CommandUtils {
 			return sender.canUseCommand(getRequiredPermissionLevel(), spec.getPermission());
 		}
 
-		String getAvailableSubCommandsString(MinecraftServer server, ICommandSender sender) {
+		private String getAvailableSubCommandsString(MinecraftServer server, ICommandSender sender) {
 			Collection<String> availableCommands = new ArrayList<>();
 			for (ICommand command : getSubCommands()) {
 				if (command.checkPermission(server, sender)) {
@@ -212,7 +275,7 @@ public final class CommandUtils {
 			return CommandBase.joinNiceStringFromCollection(availableCommands);
 		}
 
-		static String[] shiftArgs(@Nullable String[] s) {
+		private static String[] shiftArgs(@Nullable String[] s) {
 			if (s == null || s.length == 0) {
 				return new String[0];
 			}

@@ -60,6 +60,7 @@ public final class CommandSpec {
 		}
 
 		public Builder addArgument(Argument<?> key) {
+			PreconditionUtils.checkState(children.isEmpty(), "Cannot add arguments along with children specs");
 			argumentSet.add(key);
 			return this;
 		}
