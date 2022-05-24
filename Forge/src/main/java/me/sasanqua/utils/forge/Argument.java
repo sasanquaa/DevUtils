@@ -12,12 +12,14 @@ public final class Argument<T> implements Identifiable<String> {
 
 	private final String id;
 	private final ArgumentParser<T> parser;
+	private final boolean optional;
 	private final boolean flag;
 	private final String parsingErrorMessage;
 
 	private Argument(Builder<T> builder) {
 		this.id = PreconditionUtils.checkNotNull(builder.id, "Key id must not be null");
 		this.parser = PreconditionUtils.checkNotNull(builder.parser, "Parser must not be null");
+		this.optional = builder.optional;
 		this.flag = builder.flag;
 		this.parsingErrorMessage = builder.parsingErrorMessage == null ? "Invalid argument provided" : builder.parsingErrorMessage;
 	}
@@ -37,6 +39,10 @@ public final class Argument<T> implements Identifiable<String> {
 
 	boolean isFlag() {
 		return flag;
+	}
+
+	boolean isOptional() {
+		return optional;
 	}
 
 	List<String> getTabCompletionsIfAny() {
@@ -59,6 +65,7 @@ public final class Argument<T> implements Identifiable<String> {
 		private @Nullable ArgumentParser<T> parser;
 
 		private @Nullable String parsingErrorMessage;
+		private boolean optional = false;
 		private boolean flag = false;
 
 		Builder() {
@@ -80,7 +87,14 @@ public final class Argument<T> implements Identifiable<String> {
 		}
 
 		public Builder<T> flag() {
+			PreconditionUtils.checkState(!optional, "Optional cannot be used along with flag");
 			this.flag = true;
+			return this;
+		}
+
+		public Builder<T> optional() {
+			PreconditionUtils.checkState(!flag, "Flag cannot be used along with optional");
+			this.optional = true;
 			return this;
 		}
 

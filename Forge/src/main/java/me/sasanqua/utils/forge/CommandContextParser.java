@@ -17,8 +17,8 @@ final class CommandContextParser {
 	CommandContextParser(Set<Argument<?>> argumentSet) {
 		StringBuilder stringBuilder = new StringBuilder();
 		this.argumentSet = ImmutableList.copyOf(argumentSet);
-		this.argumentSet.forEach(
-				k -> stringBuilder.append(k.isFlag() ? optionalUsage(k) : requiredUsage(k)).append(" "));
+		this.argumentSet.forEach(k -> stringBuilder.append(
+				k.isFlag() ? flagUsage(k) : k.isOptional() ? optionalUsage(k) : requiredUsage(k)).append(" "));
 		this.usage = stringBuilder.toString();
 	}
 
@@ -37,6 +37,13 @@ final class CommandContextParser {
 					reader.advance();
 					consumer.accept(argument.parseOrThrow(reader));
 				}
+			}
+			return;
+		}
+		if (argument.isOptional()) {
+			try {
+				consumer.accept(argument.parseOrThrow(reader));
+			} catch (Exception ignored) {
 			}
 			return;
 		}
@@ -69,8 +76,12 @@ final class CommandContextParser {
 		return "<" + key.getId() + ">";
 	}
 
-	private String optionalUsage(@UnknownInitialization CommandContextParser this, Argument<?> key) {
+	private String flagUsage(@UnknownInitialization CommandContextParser this, Argument<?> key) {
 		return "[-" + key.getId() + " value]";
+	}
+
+	private String optionalUsage(@UnknownInitialization CommandContextParser this, Argument<?> key) {
+		return "[" + key.getId() + "]";
 	}
 
 }

@@ -12,7 +12,6 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3d;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.toposort.TopologicalSort;
 import net.minecraftforge.server.command.CommandTreeBase;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
@@ -142,24 +141,6 @@ public final class CommandUtils {
 		CommandTreeBaseWrapper command = new CommandTreeBaseWrapper(spec, keys);
 		spec.getChildren().asMap().forEach((k, v) -> command.addSubcommand(asCommandImpl(k, v.toArray(new String[0]))));
 		return command;
-	}
-
-	private static boolean hasCycle(TopologicalSort.DirectedGraph<CommandSpec> graph, CommandSpec spec, Set<CommandSpec> visitedSet, Set<CommandSpec> recursionSet) {
-		if (recursionSet.contains(spec)) {
-			return true;
-		}
-		if (visitedSet.contains(spec)) {
-			return false;
-		}
-		visitedSet.add(spec);
-		recursionSet.add(spec);
-		for (CommandSpec commandSpec : graph.edgesFrom(spec)) {
-			if (hasCycle(graph, commandSpec, visitedSet, recursionSet)) {
-				return true;
-			}
-		}
-		recursionSet.remove(spec);
-		return false;
 	}
 
 	private static class CommandBaseWrapper extends CommandBase {
