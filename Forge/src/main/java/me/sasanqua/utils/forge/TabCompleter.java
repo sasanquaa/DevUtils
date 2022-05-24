@@ -7,7 +7,6 @@ import me.sasanqua.utils.forge.def.PlayerArgumentParser;
 import me.sasanqua.utils.forge.def.WorldArgumentParser;
 import net.minecraftforge.common.DimensionManager;
 import net.minecraftforge.fml.common.FMLCommonHandler;
-import scala.actors.threadpool.Arrays;
 
 import java.util.*;
 import java.util.function.Function;
