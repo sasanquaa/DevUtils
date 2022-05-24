@@ -5,8 +5,8 @@ import com.google.common.collect.Multimap;
 import com.google.common.collect.Multimaps;
 import me.sasanqua.utils.common.PreconditionUtils;
 import org.checkerframework.checker.nullness.qual.Nullable;
-import scala.actors.threadpool.Arrays;
 
+import java.util.Arrays;
 import java.util.LinkedHashSet;
 import java.util.Optional;
 import java.util.Set;
