@@ -17,6 +17,7 @@ import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.*;
 import java.util.function.Supplier;
+import java.util.stream.Collectors;
 
 public final class CommandUtils {
 
@@ -212,6 +213,13 @@ public final class CommandUtils {
 
 		@Override
 		public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos pos) {
+			if (args.length == 1) {
+				return getListOfStringsMatchingLastWord(args, getSubCommands().stream()
+						.filter(command -> command.checkPermission(server, sender))
+						.map(ICommand::getName)
+						.collect(Collectors.toList()));
+			}
+			args = shiftArgs(args);
 			return getListOfStringsMatchingLastWord(args, spec.getParser().getTabCompletions(args));
 		}
 
