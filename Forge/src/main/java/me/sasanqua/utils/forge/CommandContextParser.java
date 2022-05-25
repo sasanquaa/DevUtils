@@ -63,8 +63,12 @@ final class CommandContextParser {
 		ArgumentReader reader = new ArgumentReader(arguments);
 		for (Argument<?> key : argumentSet) {
 			try {
-				parseArgument(key, reader, (ignored) -> {
-				});
+				if (key.isOptional()) {
+					key.parseOrThrow(reader);
+				} else {
+					parseArgument(key, reader, (ignored) -> {
+					});
+				}
 			} catch (ArgumentParsingException e) {
 				return key.getTabCompletionsIfAny();
 			}
