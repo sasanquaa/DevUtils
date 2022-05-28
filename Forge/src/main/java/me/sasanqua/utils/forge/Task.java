@@ -32,6 +32,7 @@ public final class Task {
 		this.iterations = builder.iterations;
 		this.timestamp = System.currentTimeMillis();
 		this.ticksRemaining = builder.delay > 0L ? builder.delay : 0L;
+		TASK_SET.add(this);
 	}
 
 	public static TaskBuilder builder() {
