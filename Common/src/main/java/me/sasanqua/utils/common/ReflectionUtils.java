@@ -6,12 +6,14 @@ import java.lang.reflect.Constructor;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.lang.reflect.Modifier;
+import java.util.Arrays;
 import java.util.Map;
 import java.util.Objects;
 import java.util.Optional;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.stream.Stream;
 
+@SuppressWarnings("unchecked")
 public final class ReflectionUtils {
 
 	private static final Map<Integer, Constructor<?>> constructorCache = new ConcurrentHashMap<>();
@@ -22,7 +24,7 @@ public final class ReflectionUtils {
 		final Class<?>[] argsClasses = Stream.of(args)
 				.map(arg -> (@NonNull Class<?>) arg.getClass())
 				.toArray(Class[]::new);
-		final int hash = Objects.hash(clazz, argsClasses);
+		final int hash = Objects.hash(clazz, Arrays.hashCode(argsClasses));
 		Constructor<?> constructor = constructorCache.get(hash);
 		try {
 			if (constructor == null) {
@@ -61,7 +63,7 @@ public final class ReflectionUtils {
 		final Class<?>[] argsClasses = Stream.of(args)
 				.map(arg -> (@NonNull Class<?>) arg.getClass())
 				.toArray(Class[]::new);
-		final int hash = Objects.hash(obj.getClass(), methodName, argsClasses);
+		final int hash = Objects.hash(obj.getClass(), methodName, Arrays.hashCode(argsClasses));
 		Method method = methodCache.get(hash);
 		try {
 			if (method == null) {
