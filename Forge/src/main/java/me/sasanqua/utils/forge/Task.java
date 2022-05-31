@@ -3,8 +3,8 @@ package me.sasanqua.utils.forge;
 import com.google.common.collect.Sets;
 import me.sasanqua.utils.common.PreconditionUtils;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent;
+import net.minecraftforge.event.TickEvent;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
 import org.checkerframework.checker.nullness.qual.Nullable;
 
 import java.util.Iterator;

@@ -1,73 +1,59 @@
 package me.sasanqua.utils.forge;
 
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.ServerPlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.util.Direction;
+import net.minecraft.util.TeleportationRepositioner;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.Teleporter;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraft.world.server.ServerWorld;
+
+import java.util.Optional;
 
 public final class PlayerUtils {
 
-	public static void offerItemStack(final EntityPlayerMP player, final ItemStack stack) {
+	public static void offerItemStack(final ServerPlayerEntity player, final ItemStack stack) {
 		if (stack.isEmpty()) {
 			return;
 		}
-		final boolean flag = player.addItemStackToInventory(stack);
+		final boolean flag = player.addItem(stack);
 		if (flag) {
-			player.inventoryContainer.detectAndSendChanges();
+			player.inventoryMenu.broadcastChanges();
 		} else {
-			final EntityItem entityItem = player.entityDropItem(stack, 0.5F);
+			final ItemEntity entityItem = player.drop(stack, false);
 			if (entityItem != null) {
-				entityItem.setNoPickupDelay();
-				entityItem.setOwner(player.getName());
+				entityItem.setNoPickUpDelay();
+				entityItem.setOwner(player.getUUID());
 			}
 		}
 	}
 
-	public static void forceTeleport(final EntityPlayerMP player, final WorldServer world, final BlockPos pos) {
+	public static void forceTeleport(final ServerPlayerEntity player, final ServerWorld world, final BlockPos pos) {
 		transferWorld(player, world);
-		player.setPositionAndUpdate(pos.getX(), pos.getY(), pos.getZ());
+		player.setPos(pos.getX(), pos.getY(), pos.getZ());
 	}
 
-	public static boolean attemptTeleport(final EntityPlayerMP player, final WorldServer world, BlockPos pos) {
-		transferWorld(player, world);
-		if (!player.attemptTeleport(pos.getX(), pos.getY(), pos.getZ())) {
-			pos = world.getSpawnPoint();
-			return player.attemptTeleport(pos.getX(), pos.getY(), pos.getZ());
-		}
-		return true;
-	}
-
-	private static void transferWorld(final EntityPlayerMP player, final WorldServer world) {
-		if (!player.getServerWorld().equals(world)) {
-			FMLCommonHandler.instance()
-					.getMinecraftServerInstance()
-					.getPlayerList()
-					.transferPlayerToDimension(player, world.provider.getDimension(), new VanillaTeleporter(world));
+	private static void transferWorld(final ServerPlayerEntity player, final ServerWorld world) {
+		if (!player.getCommandSenderWorld().equals(world)) {
+			player.changeDimension(world, new VanillaTeleporter(world));
 		}
 	}
 
 	private static final class VanillaTeleporter extends Teleporter {
 
-		VanillaTeleporter(final WorldServer worldIn) {
+		VanillaTeleporter(final ServerWorld worldIn) {
 			super(worldIn);
 		}
 
 		@Override
-		public void placeInPortal(final Entity entityIn, final float rotationYaw) {
+		public Optional<TeleportationRepositioner.Result> findPortalAround(final BlockPos p_242957_1_, final boolean p_242957_2_) {
+			return Optional.empty();
 		}
 
 		@Override
-		public boolean placeInExistingPortal(final Entity entityIn, final float rotationYaw) {
-			return false;
-		}
-
-		@Override
-		public boolean makePortal(final Entity entityIn) {
-			return false;
+		public Optional<TeleportationRepositioner.Result> createPortal(final BlockPos p_242956_1_, final Direction.Axis p_242956_2_) {
+			return Optional.empty();
 		}
 
 	}

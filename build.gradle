@@ -8,8 +8,10 @@ allprojects {
     version "1.0.0"
 
     ext {
-        spongeVersion = '7.4.0'
-        forgeVersion = '1.12.2-14.23.5.2860'
+        spongeVersion = '8.0.0'
+        forgeVersion = '1.16.5-36.2.20'
+        forgeMappingsChannel = 'official'
+        forgeMappingsVersion = '1.16.5'
         junitVersion = '5.7.1'
         checkerVersion = '3.21.4'
     }
@@ -65,7 +67,7 @@ subprojects {
 
     checkerFramework {
         checkers = ['org.checkerframework.checker.nullness.NullnessChecker']
-        skipCheckerFramework = System.getenv("SKIP_CHECKER_FRAMEWORK") == null ? false : true
+        skipCheckerFramework = System.getenv("SKIP_CHECKER_FRAMEWORK") != null
     }
 
     publishing {

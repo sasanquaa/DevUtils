@@ -16,7 +16,7 @@ public class TextTest {
 				.add("name", "SASANQUA")
 				.add("name2", "SASANQUA")
 				.parse()
-				.getUnformattedText();
+				.getText();
 
 		Assertions.assertEquals(value.replace("{name}", "SASANQUA").replace("{name2}", "SASANQUA"), parsed);
 	}

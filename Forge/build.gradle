@@ -9,11 +9,6 @@ buildscript {
 
 apply plugin: 'net.minecraftforge.gradle'
 
-ext {
-    mappingsChannel = 'stable'
-    mappingsVersion = '39-1.12'
-}
-
 configurations.getByName("minecraft") { minecraft ->
     configurations.getByName("implementation") { implementation ->
         implementation.extendsFrom = implementation.extendsFrom.findAll { c -> c != minecraft }
@@ -23,9 +18,8 @@ configurations.getByName("minecraft") { minecraft ->
     }
 }
 
-
 minecraft {
-    mappings channel: mappingsChannel, version: mappingsVersion
+    mappings channel: forgeMappingsChannel, version: forgeMappingsVersion
 }
 
 dependencies {
