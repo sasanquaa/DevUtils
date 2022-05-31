@@ -19,7 +19,7 @@ public final class CommandSpec {
 	private final CommandExecutor executor;
 	private final CommandContextParser parser;
 
-	private CommandSpec(Builder builder) {
+	private CommandSpec(final Builder builder) {
 		this.permission = PreconditionUtils.checkNotNull(builder.permission, "Permission must not be null");
 		this.usage = builder.usage;
 		this.children = Multimaps.unmodifiableMultimap(builder.children);
@@ -59,13 +59,13 @@ public final class CommandSpec {
 		Builder() {
 		}
 
-		public Builder addArgument(Argument<?> key) {
+		public Builder addArgument(final Argument<?> key) {
 			PreconditionUtils.checkState(children.isEmpty(), "Cannot add arguments along with children specs");
 			argumentSet.add(key);
 			return this;
 		}
 
-		public Builder addChild(CommandSpec commandSpec, String... keys) {
+		public Builder addChild(final CommandSpec commandSpec, final String... keys) {
 			PreconditionUtils.checkArgument(!children.containsKey(commandSpec), "Command spec already existed");
 			PreconditionUtils.checkArgument(keys.length > 0, "Keys must not be empty");
 			PreconditionUtils.checkState(argumentSet.isEmpty(), "Cannot add child along with self arguments");
@@ -73,17 +73,17 @@ public final class CommandSpec {
 			return this;
 		}
 
-		public Builder permission(String permission) {
+		public Builder permission(final String permission) {
 			this.permission = permission;
 			return this;
 		}
 
-		public Builder usage(String usage) {
+		public Builder usage(final String usage) {
 			this.usage = usage;
 			return this;
 		}
 
-		public Builder executor(CommandExecutor executor) {
+		public Builder executor(final CommandExecutor executor) {
 			this.executor = executor;
 			return this;
 		}

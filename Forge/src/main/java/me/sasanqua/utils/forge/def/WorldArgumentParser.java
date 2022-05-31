@@ -10,8 +10,8 @@ import java.util.stream.Stream;
 public class WorldArgumentParser implements ArgumentParser<WorldServer> {
 
 	@Override
-	public WorldServer parse(ArgumentReader reader) throws Exception {
-		String world = reader.advance();
+	public WorldServer parse(final ArgumentReader reader) throws Exception {
+		final String world = reader.advance();
 		return Stream.of(DimensionManager.getWorlds())
 				.filter(w -> w.getWorldInfo().getWorldName().equalsIgnoreCase(world))
 				.findFirst()

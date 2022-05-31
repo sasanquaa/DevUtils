@@ -9,7 +9,7 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 public class PlayerArgumentParser implements ArgumentParser<EntityPlayerMP> {
 
 	@Override
-	public EntityPlayerMP parse(ArgumentReader reader) throws Exception {
+	public EntityPlayerMP parse(final ArgumentReader reader) throws Exception {
 		return PreconditionUtils.checkNotNull(FMLCommonHandler.instance()
 				.getMinecraftServerInstance()
 				.getPlayerList()

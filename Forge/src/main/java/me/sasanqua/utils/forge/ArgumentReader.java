@@ -7,7 +7,7 @@ public final class ArgumentReader {
 	private final String[] arguments;
 	private int current = 0;
 
-	ArgumentReader(String[] arguments) {
+	ArgumentReader(final String[] arguments) {
 		this.arguments = arguments;
 	}
 

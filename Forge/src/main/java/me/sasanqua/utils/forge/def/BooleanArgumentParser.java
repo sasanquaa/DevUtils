@@ -6,7 +6,7 @@ import me.sasanqua.utils.forge.ArgumentReader;
 public class BooleanArgumentParser implements ArgumentParser<Boolean> {
 
 	@Override
-	public Boolean parse(ArgumentReader reader) throws Exception {
+	public Boolean parse(final ArgumentReader reader) throws Exception {
 		return Boolean.parseBoolean(reader.advance());
 	}
 

@@ -8,7 +8,7 @@ public final class PlaceholderMatcher {
 	private final String argumentsSeparator;
 	private final String placeholderArgumentsSeparator;
 
-	PlaceholderMatcher(Pattern pattern, String argumentsSeparator, String placeholderArgumentsSeparator) {
+	PlaceholderMatcher(final Pattern pattern, final String argumentsSeparator, final String placeholderArgumentsSeparator) {
 		this.pattern = pattern;
 		this.argumentsSeparator = argumentsSeparator;
 		this.placeholderArgumentsSeparator = placeholderArgumentsSeparator;

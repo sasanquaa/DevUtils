@@ -11,15 +11,15 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public final class PlayerUtils {
 
-	public static void offerItemStack(EntityPlayerMP player, ItemStack stack) {
+	public static void offerItemStack(final EntityPlayerMP player, final ItemStack stack) {
 		if (stack.isEmpty()) {
 			return;
 		}
-		boolean flag = player.addItemStackToInventory(stack);
+		final boolean flag = player.addItemStackToInventory(stack);
 		if (flag) {
 			player.inventoryContainer.detectAndSendChanges();
 		} else {
-			EntityItem entityItem = player.entityDropItem(stack, 0.5F);
+			final EntityItem entityItem = player.entityDropItem(stack, 0.5F);
 			if (entityItem != null) {
 				entityItem.setNoPickupDelay();
 				entityItem.setOwner(player.getName());
@@ -27,12 +27,12 @@ public final class PlayerUtils {
 		}
 	}
 
-	public static void forceTeleport(EntityPlayerMP player, WorldServer world, BlockPos pos) {
+	public static void forceTeleport(final EntityPlayerMP player, final WorldServer world, final BlockPos pos) {
 		transferWorld(player, world);
 		player.setPositionAndUpdate(pos.getX(), pos.getY(), pos.getZ());
 	}
 
-	public static boolean attemptTeleport(EntityPlayerMP player, WorldServer world, BlockPos pos) {
+	public static boolean attemptTeleport(final EntityPlayerMP player, final WorldServer world, BlockPos pos) {
 		transferWorld(player, world);
 		if (!player.attemptTeleport(pos.getX(), pos.getY(), pos.getZ())) {
 			pos = world.getSpawnPoint();
@@ -41,7 +41,7 @@ public final class PlayerUtils {
 		return true;
 	}
 
-	private static void transferWorld(EntityPlayerMP player, WorldServer world) {
+	private static void transferWorld(final EntityPlayerMP player, final WorldServer world) {
 		if (!player.getServerWorld().equals(world)) {
 			FMLCommonHandler.instance()
 					.getMinecraftServerInstance()
@@ -52,21 +52,21 @@ public final class PlayerUtils {
 
 	private static final class VanillaTeleporter extends Teleporter {
 
-		VanillaTeleporter(WorldServer worldIn) {
+		VanillaTeleporter(final WorldServer worldIn) {
 			super(worldIn);
 		}
 
 		@Override
-		public void placeInPortal(Entity entityIn, float rotationYaw) {
+		public void placeInPortal(final Entity entityIn, final float rotationYaw) {
 		}
 
 		@Override
-		public boolean placeInExistingPortal(Entity entityIn, float rotationYaw) {
+		public boolean placeInExistingPortal(final Entity entityIn, final float rotationYaw) {
 			return false;
 		}
 
 		@Override
-		public boolean makePortal(Entity entityIn) {
+		public boolean makePortal(final Entity entityIn) {
 			return false;
 		}
 

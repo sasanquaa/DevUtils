@@ -26,7 +26,7 @@ public final class Task {
 
 	private boolean expired;
 
-	Task(TaskBuilder builder) {
+	Task(final TaskBuilder builder) {
 		this.consumer = PreconditionUtils.checkNotNull(builder.consumer);
 		this.interval = builder.interval;
 		this.iterations = builder.iterations;
@@ -75,11 +75,11 @@ public final class Task {
 		}
 
 		@SubscribeEvent
-		public void onServerTick(TickEvent.ServerTickEvent event) {
+		public void onServerTick(final TickEvent.ServerTickEvent event) {
 			if (event.phase == TickEvent.Phase.END) {
-				Iterator<Task> iterator = TASK_SET.iterator();
+				final Iterator<Task> iterator = TASK_SET.iterator();
 				while (iterator.hasNext()) {
-					Task task = iterator.next();
+					final Task task = iterator.next();
 					task.tick();
 					if (task.isExpired()) {
 						iterator.remove();
@@ -102,27 +102,27 @@ public final class Task {
 		TaskBuilder() {
 		}
 
-		public TaskBuilder execute(Runnable runnable) {
+		public TaskBuilder execute(final Runnable runnable) {
 			this.consumer = (task -> runnable.run());
 			return this;
 		}
 
-		public TaskBuilder execute(Consumer<Task> consumer) {
+		public TaskBuilder execute(final Consumer<Task> consumer) {
 			this.consumer = consumer;
 			return this;
 		}
 
-		public TaskBuilder delay(long delay) {
+		public TaskBuilder delay(final long delay) {
 			this.delay = delay;
 			return this;
 		}
 
-		public TaskBuilder interval(long interval) {
+		public TaskBuilder interval(final long interval) {
 			this.interval = interval;
 			return this;
 		}
 
-		public TaskBuilder iterations(long iterations) {
+		public TaskBuilder iterations(final long iterations) {
 			this.iterations = iterations;
 			return this;
 		}

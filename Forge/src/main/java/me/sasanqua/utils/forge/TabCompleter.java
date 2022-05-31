@@ -32,7 +32,7 @@ final class TabCompleter {
 				FMLCommonHandler.instance().getMinecraftServerInstance().getOnlinePlayerNames()));
 	}
 
-	static List<String> getTabCompletions(ArgumentParser<?> parser) {
+	static List<String> getTabCompletions(final ArgumentParser<?> parser) {
 		return Optional.ofNullable(COMPLETER_MAP.get(parser.getClass()))
 				.map(completer -> completer.apply(parser))
 				.orElse(Collections.EMPTY_LIST);

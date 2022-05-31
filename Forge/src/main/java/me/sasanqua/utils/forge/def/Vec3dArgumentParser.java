@@ -8,10 +8,10 @@ import net.minecraft.util.math.Vec3d;
 public class Vec3dArgumentParser implements ArgumentParser<Vec3d> {
 
 	@Override
-	public Vec3d parse(ArgumentReader reader) throws Exception {
-		double x = CommandUtils.DOUBLE_ARGUMENT_PARSER.parse(reader);
-		double y = CommandUtils.DOUBLE_ARGUMENT_PARSER.parse(reader);
-		double z = CommandUtils.DOUBLE_ARGUMENT_PARSER.parse(reader);
+	public Vec3d parse(final ArgumentReader reader) throws Exception {
+		final double x = CommandUtils.DOUBLE_ARGUMENT_PARSER.parse(reader);
+		final double y = CommandUtils.DOUBLE_ARGUMENT_PARSER.parse(reader);
+		final double z = CommandUtils.DOUBLE_ARGUMENT_PARSER.parse(reader);
 		return new Vec3d(x, y, z);
 	}
 

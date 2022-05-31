@@ -22,35 +22,35 @@ public final class TextUtils {
 			.pattern(Pattern.compile("\\{([^{}\\s]+)}", Pattern.CASE_INSENSITIVE))
 			.build();
 
-	public static Text deserialize(String str) {
+	public static Text deserialize(final String str) {
 		return TextSerializers.FORMATTING_CODE.deserialize(str);
 	}
 
-	public static String serialize(Text text) {
+	public static String serialize(final Text text) {
 		return TextSerializers.FORMATTING_CODE.serialize(text);
 	}
 
-	public static Text deserializeLegacy(String str) {
+	public static Text deserializeLegacy(final String str) {
 		return TextSerializers.LEGACY_FORMATTING_CODE.deserialize(str);
 	}
 
-	public static String serializeLegacy(Text text) {
+	public static String serializeLegacy(final Text text) {
 		return TextSerializers.LEGACY_FORMATTING_CODE.serialize(text);
 	}
 
-	public static List<Text> lore(String... messages) {
+	public static List<Text> lore(final String... messages) {
 		return lore(Arrays.asList(messages));
 	}
 
-	public static List<Text> lore(List<String> messages) {
+	public static List<Text> lore(final List<String> messages) {
 		return messages.stream().map(TextUtils::deserialize).collect(Collectors.toList());
 	}
 
-	public static List<Text> loreLegacy(String... messages) {
+	public static List<Text> loreLegacy(final String... messages) {
 		return loreLegacy(Arrays.asList(messages));
 	}
 
-	public static List<Text> loreLegacy(List<String> messages) {
+	public static List<Text> loreLegacy(final List<String> messages) {
 		return messages.stream().map(TextUtils::deserializeLegacy).collect(Collectors.toList());
 	}
 
@@ -64,16 +64,16 @@ public final class TextUtils {
 		private final String closeArg;
 		private final Pattern pattern;
 
-		TextTemplateConverter(TextTemplateConverterBuilder builder) {
+		TextTemplateConverter(final TextTemplateConverterBuilder builder) {
 			this.openArg = builder.openArg;
 			this.closeArg = builder.closeArg;
 			this.pattern = builder.pattern;
 		}
 
-		public TextTemplate convert(Text text) {
-			List<TextRepresentable> parts = new ArrayList<>();
-			String str = serialize(text);
-			Matcher matcher = pattern.matcher(str);
+		public TextTemplate convert(final Text text) {
+			final List<TextRepresentable> parts = new ArrayList<>();
+			final String str = serialize(text);
+			final Matcher matcher = pattern.matcher(str);
 			int i = 0;
 			while (matcher.find()) {
 				parts.add(deserialize(str.substring(i, matcher.start())));
@@ -97,17 +97,17 @@ public final class TextUtils {
 		TextTemplateConverterBuilder() {
 		}
 
-		public TextTemplateConverterBuilder openArg(String openArg) {
+		public TextTemplateConverterBuilder openArg(final String openArg) {
 			this.openArg = openArg;
 			return this;
 		}
 
-		public TextTemplateConverterBuilder closeArg(String closeArg) {
+		public TextTemplateConverterBuilder closeArg(final String closeArg) {
 			this.closeArg = closeArg;
 			return this;
 		}
 
-		public TextTemplateConverterBuilder pattern(Pattern pattern) {
+		public TextTemplateConverterBuilder pattern(final Pattern pattern) {
 			this.pattern = pattern;
 			return this;
 		}

@@ -16,7 +16,7 @@ public final class Argument<T> implements Identifiable<String> {
 	private final boolean flag;
 	private final String parsingErrorMessage;
 
-	private Argument(Builder<T> builder) {
+	private Argument(final Builder<T> builder) {
 		this.id = PreconditionUtils.checkNotNull(builder.id, "Key id must not be null");
 		this.parser = PreconditionUtils.checkNotNull(builder.parser, "Parser must not be null");
 		this.optional = builder.optional;
@@ -29,10 +29,10 @@ public final class Argument<T> implements Identifiable<String> {
 		return id;
 	}
 
-	Object parseOrThrow(ArgumentReader reader) throws ArgumentParsingException {
+	Object parseOrThrow(final ArgumentReader reader) throws ArgumentParsingException {
 		try {
 			return PreconditionUtils.checkNotNull(parser.parse(reader));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			throw new ArgumentParsingException(parsingErrorMessage, e);
 		}
 	}
@@ -50,7 +50,7 @@ public final class Argument<T> implements Identifiable<String> {
 	}
 
 	@Override
-	public boolean equals(@Nullable Object o) {
+	public boolean equals(final @Nullable Object o) {
 		return o instanceof Argument && Objects.equals(id, ((Argument<?>) o).id);
 	}
 
@@ -71,17 +71,17 @@ public final class Argument<T> implements Identifiable<String> {
 		Builder() {
 		}
 
-		public Builder<T> id(String id) {
+		public Builder<T> id(final String id) {
 			this.id = id;
 			return this;
 		}
 
-		public Builder<T> parser(ArgumentParser<T> parser) {
+		public Builder<T> parser(final ArgumentParser<T> parser) {
 			this.parser = parser;
 			return this;
 		}
 
-		public Builder<T> parsingErrorMessage(String message) {
+		public Builder<T> parsingErrorMessage(final String message) {
 			this.parsingErrorMessage = message;
 			return this;
 		}

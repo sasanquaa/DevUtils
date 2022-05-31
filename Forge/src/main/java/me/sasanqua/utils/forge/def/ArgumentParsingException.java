@@ -4,7 +4,7 @@ import net.minecraft.command.CommandException;
 
 public class ArgumentParsingException extends CommandException {
 
-	public ArgumentParsingException(String message, Object... objects) {
+	public ArgumentParsingException(final String message, final Object... objects) {
 		super(message, objects);
 	}
 

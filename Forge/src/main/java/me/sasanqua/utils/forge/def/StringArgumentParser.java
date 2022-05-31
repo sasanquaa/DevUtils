@@ -7,22 +7,22 @@ import me.sasanqua.utils.forge.ArgumentReader;
 public class StringArgumentParser implements ArgumentParser<String> {
 
 	@Override
-	public String parse(ArgumentReader reader) throws Exception {
-		StringBuilder value = new StringBuilder(reader.advance());
+	public String parse(final ArgumentReader reader) throws Exception {
+		final StringBuilder value = new StringBuilder(reader.advance());
 		if (value.charAt(0) != '"' && value.charAt(0) != '\'') {
 			return value.toString();
 		}
-		char quote = value.charAt(0);
-		String escape = "\\" + quote;
+		final char quote = value.charAt(0);
+		final String escape = "\\" + quote;
 		while (reader.canAdvance()) {
-			String current = reader.advance();
+			final String current = reader.advance();
 			value.append(" ").append(current);
 			if (!current.contains(escape) && value.charAt(value.length() - 1) == quote) {
 				break;
 			}
 		}
 		PreconditionUtils.checkState(value.charAt(value.length() - 1) == quote);
-		String result = value.toString().replace(escape, String.valueOf(quote));
+		final String result = value.toString().replace(escape, String.valueOf(quote));
 		return result.substring(1, result.length() - 1);
 	}
 

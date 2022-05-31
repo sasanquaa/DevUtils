@@ -22,36 +22,36 @@ final class TextCallbackCommand extends CommandBase {
 	}
 
 	@Override
-	public String getUsage(ICommandSender sender) {
+	public String getUsage(final ICommandSender sender) {
 		return "/" + callbackCommand + " <uuid>";
 	}
 
 	@Override
-	public void execute(MinecraftServer server, ICommandSender sender, String[] args) {
+	public void execute(final MinecraftServer server, final ICommandSender sender, final String[] args) {
 		if (sender instanceof EntityPlayerMP) {
-			EntityPlayerMP player = (EntityPlayerMP) sender;
+			final EntityPlayerMP player = (EntityPlayerMP) sender;
 			if (args.length == 1) {
 				try {
-					UUID uuid = UUID.fromString(args[0]);
+					final UUID uuid = UUID.fromString(args[0]);
 					if (CALLBACK_MAP.containsKey(uuid)) {
 						CALLBACK_MAP.get(uuid).tryInvokeConsumer(player);
 						CALLBACK_MAP.values().removeIf(t -> System.currentTimeMillis() > t.persistTimestamp);
 					}
-				} catch (IllegalArgumentException ignored) {
+				} catch (final IllegalArgumentException ignored) {
 				}
 			}
 		}
 	}
 
 	@Override
-	public boolean checkPermission(MinecraftServer server, ICommandSender sender) {
+	public boolean checkPermission(final MinecraftServer server, final ICommandSender sender) {
 		return true;
 	}
 
-	static <T extends ITextComponent> T addCallback(T text, Consumer<EntityPlayerMP> consumer, boolean invokeOnlyOnce) {
-		TextCallback callback = new TextCallback(consumer, invokeOnlyOnce);
+	static <T extends ITextComponent> T addCallback(final T text, final Consumer<EntityPlayerMP> consumer, final boolean invokeOnlyOnce) {
+		final TextCallback callback = new TextCallback(consumer, invokeOnlyOnce);
 		CALLBACK_MAP.put(callback.id, callback);
-		ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND,
+		final ClickEvent clickEvent = new ClickEvent(ClickEvent.Action.RUN_COMMAND,
 				"/" + callbackCommand + " " + callback.id);
 		text.getStyle().setClickEvent(clickEvent);
 		return text;
@@ -61,7 +61,7 @@ final class TextCallbackCommand extends CommandBase {
 		return callbackCommand;
 	}
 
-	static void setCallbackCommand(String command) {
+	static void setCallbackCommand(final String command) {
 		callbackCommand = command;
 	}
 
@@ -73,13 +73,13 @@ final class TextCallbackCommand extends CommandBase {
 		final boolean onlyInvokeOnce;
 		final long persistTimestamp = System.currentTimeMillis() + TimeUnit.MINUTES.toMillis(10);
 
-		TextCallback(Consumer<EntityPlayerMP> consumer, boolean onlyInvokeOnce) {
+		TextCallback(final Consumer<EntityPlayerMP> consumer, final boolean onlyInvokeOnce) {
 			this.id = UUID.randomUUID();
 			this.consumer = consumer;
 			this.onlyInvokeOnce = onlyInvokeOnce;
 		}
 
-		void tryInvokeConsumer(EntityPlayerMP player) {
+		void tryInvokeConsumer(final EntityPlayerMP player) {
 			if (onlyInvokeOnce && playersInvoked.contains(player.getUniqueID())) {
 				return;
 			}

@@ -8,7 +8,7 @@ import net.minecraft.util.math.BlockPos;
 public class BlockPosArgumentParser implements ArgumentParser<BlockPos> {
 
 	@Override
-	public BlockPos parse(ArgumentReader reader) throws Exception {
+	public BlockPos parse(final ArgumentReader reader) throws Exception {
 		return new BlockPos(CommandUtils.VEC3I_ARGUMENT_PARSER.parse(reader));
 	}
 

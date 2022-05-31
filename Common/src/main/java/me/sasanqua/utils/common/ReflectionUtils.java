@@ -18,9 +18,11 @@ public final class ReflectionUtils {
 	private static final Map<Integer, Field> fieldCache = new ConcurrentHashMap<>();
 	private static final Map<Integer, Method> methodCache = new ConcurrentHashMap<>();
 
-	public static <T> Optional<T> newInstance(Class<T> clazz, Object... args) {
-		Class<?>[] argsClasses = Stream.of(args).map(arg -> (@NonNull Class<?>) arg.getClass()).toArray(Class[]::new);
-		int hash = Objects.hash(clazz, argsClasses);
+	public static <T> Optional<T> newInstance(final Class<T> clazz, final Object... args) {
+		final Class<?>[] argsClasses = Stream.of(args)
+				.map(arg -> (@NonNull Class<?>) arg.getClass())
+				.toArray(Class[]::new);
+		final int hash = Objects.hash(clazz, argsClasses);
 		Constructor<?> constructor = constructorCache.get(hash);
 		try {
 			if (constructor == null) {
@@ -29,35 +31,37 @@ public final class ReflectionUtils {
 				constructorCache.putIfAbsent(hash, constructor);
 			}
 			return Optional.ofNullable((T) constructor.newInstance(args));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		return Optional.empty();
 	}
 
-	public static <T> Optional<T> getField(Object obj, String fieldName) {
+	public static <T> Optional<T> getField(final Object obj, final String fieldName) {
 		try {
 			return Optional.ofNullable((T) getFieldOrCreate(obj, fieldName).get(obj));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		return Optional.empty();
 	}
 
-	public static <T> Optional<T> setField(Object obj, String fieldName, Object value) {
+	public static <T> Optional<T> setField(final Object obj, final String fieldName, final Object value) {
 		try {
-			Optional<T> previousValue = getField(obj, fieldName);
+			final Optional<T> previousValue = getField(obj, fieldName);
 			getFieldOrCreate(obj, fieldName).set(obj, value);
 			return previousValue;
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		return Optional.empty();
 	}
 
-	public static <T> Optional<T> invokeMethod(Object obj, String methodName, Object... args) {
-		Class<?>[] argsClasses = Stream.of(args).map(arg -> (@NonNull Class<?>) arg.getClass()).toArray(Class[]::new);
-		int hash = Objects.hash(obj.getClass(), methodName, argsClasses);
+	public static <T> Optional<T> invokeMethod(final Object obj, final String methodName, final Object... args) {
+		final Class<?>[] argsClasses = Stream.of(args)
+				.map(arg -> (@NonNull Class<?>) arg.getClass())
+				.toArray(Class[]::new);
+		final int hash = Objects.hash(obj.getClass(), methodName, argsClasses);
 		Method method = methodCache.get(hash);
 		try {
 			if (method == null) {
@@ -66,16 +70,16 @@ public final class ReflectionUtils {
 				methodCache.putIfAbsent(hash, method);
 			}
 			return Optional.ofNullable((T) method.invoke(obj, args));
-		} catch (Exception e) {
+		} catch (final Exception e) {
 			e.printStackTrace();
 		}
 		return Optional.empty();
 	}
 
-	private static Field getFieldOrCreate(Object obj, String fieldName)
+	private static Field getFieldOrCreate(final Object obj, final String fieldName)
 			throws NoSuchFieldException, IllegalAccessException {
-		int hash = Objects.hash(obj.getClass(), fieldName);
-		int modifiersHash = Objects.hash(Field.class, "modifiers");
+		final int hash = Objects.hash(obj.getClass(), fieldName);
+		final int modifiersHash = Objects.hash(Field.class, "modifiers");
 		Field field = fieldCache.get(hash);
 		if (field == null) {
 			field = obj.getClass().getDeclaredField(fieldName);

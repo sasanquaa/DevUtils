@@ -8,7 +8,7 @@ import java.util.UUID;
 public class UUIDArgumentParser implements ArgumentParser<UUID> {
 
 	@Override
-	public UUID parse(ArgumentReader reader) throws Exception {
+	public UUID parse(final ArgumentReader reader) throws Exception {
 		return UUID.fromString(reader.advance());
 	}
 

@@ -10,7 +10,7 @@ public class EnumArgumentParser<T extends Enum<T>> implements ArgumentParser<T> 
 
 	private final Class<T> enumClass;
 
-	public EnumArgumentParser(Class<T> enumClass) {
+	public EnumArgumentParser(final Class<T> enumClass) {
 		this.enumClass = enumClass;
 	}
 
@@ -19,8 +19,8 @@ public class EnumArgumentParser<T extends Enum<T>> implements ArgumentParser<T> 
 	}
 
 	@Override
-	public T parse(ArgumentReader reader) throws Exception {
-		String value = reader.advance();
+	public T parse(final ArgumentReader reader) throws Exception {
+		final String value = reader.advance();
 		return Stream.of(PreconditionUtils.checkNotNull(enumClass.getEnumConstants()))
 				.filter(t -> t.name().equalsIgnoreCase(value))
 				.findFirst()

@@ -15,7 +15,7 @@ public final class CommandContext {
 	private @MonotonicNonNull MinecraftServer server;
 	private @MonotonicNonNull ICommandSender sender;
 
-	CommandContext(Map<Argument<?>, Object> values) {
+	CommandContext(final Map<Argument<?>, Object> values) {
 		this.values = values;
 	}
 
@@ -27,19 +27,19 @@ public final class CommandContext {
 		return PreconditionUtils.checkNotNull(sender);
 	}
 
-	void setServer(MinecraftServer server) {
+	void setServer(final MinecraftServer server) {
 		this.server = server;
 	}
 
-	void setSender(ICommandSender sender) {
+	void setSender(final ICommandSender sender) {
 		this.sender = sender;
 	}
 
-	public <T> Optional<T> find(Argument<T> key) {
+	public <T> Optional<T> find(final Argument<T> key) {
 		return Optional.ofNullable((T) values.get(key));
 	}
 
-	public <T> T get(Argument<T> key) throws CommandException {
+	public <T> T get(final Argument<T> key) throws CommandException {
 		return find(key).orElseThrow(
 				() -> new CommandException("Argument key with id " + key.getId() + " not found inside context!"));
 	}
