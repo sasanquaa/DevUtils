@@ -109,7 +109,7 @@ public final class BarUtils {
 						if (updated % 2 == 0) {
 							COOLDOWN_MAP.put(namespacedKey(player.get(), id), Tuple.of(totalSeconds,
 									elapsedSeconds + TimeUnit.MILLISECONDS.toSeconds(
-											(long) Sponge.server().averageTickTime() * 2L)));
+											(long) (1.0f / Sponge.server().targetTicksPerSecond()) * 2L)));
 						}
 
 					});
